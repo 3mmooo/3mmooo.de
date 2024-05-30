@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>www.3mmooo.de</title>
+    <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
+    <script src="https://unpkg.com/aframe-extras/dist/aframe-extras.min.js"></script>
+  <!--  <script src="3dmmooo copy.js"></script> -->
+    <script src="nip.js"></script>
+    <style>
+        .download-box {
+            margin: 10px;
+            padding: 10px;
+            width: 200px;
+            background-color: #8A2BE2;
+            color: white;
+            border-radius: 5px;
+            text-align: center;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <a-scene>
+        <!-- Lichtquelle hinzugefügt -->
+        <a-light type="directional" position="-1 1 1" intensity="1" castShadow="true"></a-light>
+
+        <!-- Kamera mit Blick- und WASD-Bewegungssteuerung -->
+        <a-entity position="10 2 9" camera look-controls wasd-controls raycaster="objects: .clickable">
+            <a-entity cursor="fuse: false; fuseTimeout: 500"
+                      position="0 0 -1"
+                      geometry="primitive: sphere; radius: 0.01;"
+                      material="color: yellow; shader: flat">
+            </a-entity>
+            <a-box id="homeButton" class="clickable menu-item" data-target="#home"></a-box>
+        </a-entity>
+
+        <!-- Willkommensbanner -->
+        <a-box position="10 8 -10" rotation="0 0 0" color="white" width="8" height="2.5" depth="2" 
+            class="clickable menu-item" shadow 
+            data-target="#WelcomeSection"       
+            animation__mouseenter="property: scale; to: 1.3 1.3 1.3; startEvents: mouseenter; dur: 200"
+            animation__mouseleave="property: scale; to: 1 1 1; startEvents: mouseleave; dur: 200"
+            animation="property: rotation; to: 360 360 360; loop: true; dur: 7500">
+            <a-text value="3mmooo.de" color="#8A2BE2" position="-2.8 0 1" scale="4.6 5 4"></a-text>
+            <a-text value="3mmooo.de" color="#8A2BE2" position="3 0 -1.2" scale="4.6 5 4" rotation="0 180 0"></a-text>
+        </a-box>
+
+        <!-- Download-Boxen -->
+        <a-box position="-10 0 -10" rotation="0 0 0" color="#8A2BE2" width="8" height="2" depth="2" 
+               class="clickable menu-item" link-on-click="url: programm1.exe"
+               animation__mouseenter="property: scale; to: 1.3 1.3 1.3; startEvents: mouseenter; dur: 200"
+               animation__mouseleave="property: scale; to: 1 1 1; startEvents: mouseleave; dur: 200"
+               shadow>
+            <a-text value="SubCalculator" color="black" position="-3 0 1" scale="4 4 4"></a-text>
+            <a-text id="description1" value="Beschreibung für SubCo" color="white" position="0 -2 1" scale="3 3 3" visible="false"></a-text>
+        </a-box>
+
+        <a-box position="0 0 -10" rotation="0 0 0" color="#8A2BE2" width="8" height="2" depth="2" 
+               class="clickable menu-item" link-on-click="url: programm2.zip"
+               animation__mouseenter="property: scale; to: 1.3 1.3 1.3; startEvents: mouseenter; dur: 200"
+               animation__mouseleave="property: scale; to: 1 1 1; startEvents: mouseleave; dur: 200"
+               shadow>
+            <a-text value="NiP-NWTool" color="black" position="-3 0 1" scale="4 4 4"></a-text>
+            <a-text id="description2" value="Beschreibung für NiP-NWTool" color="white" position="0 -2 1" scale="3 3 3" visible="false"></a-text>
+        </a-box>
+
+        <a-box position="10 0 -10" rotation="0 0 0" color="#8A2BE2" width="8" height="2" depth="2" 
+               class="clickable menu-item" link-on-click="url: programm3.zip"
+               animation__mouseenter="property: scale; to: 1.3 1.3 1.3; startEvents: mouseenter; dur: 200"
+               animation__mouseleave="property: scale; to: 1 1 1; startEvents: mouseleave; dur: 200"
+               shadow>
+            <a-text value="DuD-NWTool" color="black" position="-3 0 1" scale="4 4 4"></a-text>
+            <a-text id="description3" value="Beschreibung für DuD-NWTool" color="white" position="0 -2 1" scale="3 3 3" visible="false"></a-text>
+        </a-box>
+
+        <a-box position="20 0 -10" rotation="0 0 0" color="#8A2BE2" width="8" height="2" depth="2" 
+               class="clickable menu-item" link-on-click="url: programm4.zip"
+               animation__mouseenter="property: scale; to: 1.3 1.3 1.3; startEvents: mouseenter; dur: 200"
+               animation__mouseleave="property: scale; to: 1 1 1; startEvents: mouseleave; dur: 200"
+               shadow>
+            <a-text value="AD-Tool" color="black" position="-2 0 1" scale="4 4 4"></a-text>
+            <a-text id="description4" value="Beschreibung für AD-Tool" color="white" position="0 -2 1" scale="3 3 3" visible="false"></a-text>
+        </a-box>
+
+        <a-box position="30 0 -10" rotation="0 0 0" color="#8A2BE2" width="8" height="2" depth="2" 
+               class="clickable menu-item" link-on-click="url: programm5.zip"
+               animation__mouseenter="property: scale; to: 1.3 1.3 1.3; startEvents: mouseenter; dur: 200"
+               animation__mouseleave="property: scale; to: 1 1 1; startEvents: mouseleave; dur: 200"
+               shadow>
+            <a-text value="FontChecker" color="black" position="-3 0 1" scale="4 4 4"></a-text>
+            <a-text id="description5" value="Beschreibung für FontChecker" color="white" position="0 -2 1" scale="3 3 3" visible="false"></a-text>
+        </a-box>
+
+        <a-sky src="jupiter-7266014.png"></a-sky>
+    </a-scene>
+
+    <script>
+        AFRAME.registerComponent('link-on-click', {
+            schema: { url: { default: '' } },
+            init: function () {
+                this.el.addEventListener('click', () => {
+                    window.open(this.data.url, '_blank');
+                });
+            }
+        });
+
+        AFRAME.registerComponent('show-description', {
+            schema: { target: { type: 'selector' } },
+            init: function () {
+                this.el.addEventListener('mouseenter', () => {
+                    this.data.target.setAttribute('visible', true);
+                });
+                this.el.addEventListener('mouseleave', () => {
+                    this.data.target.setAttribute('visible', false);
+                });
+            }
+        });
+
+        // Add show-description component to each box
+        document.querySelector('[position="-10 0 -10"]').setAttribute('show-description', 'target: #description1');
+        document.querySelector('[position="0 0 -10"]').setAttribute('show-description', 'target: #description2');
+        document.querySelector('[position="10 0 -10"]').setAttribute('show-description', 'target: #description3');
+        document.querySelector('[position="20 0 -10"]').setAttribute('show-description', 'target: #description4');
+        document.querySelector('[position="30 0 -10"]').setAttribute('show-description', 'target: #description5');
+    </script>
+
+</body>
+</html>
