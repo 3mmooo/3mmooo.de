@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Snake – 3mmooo.de</title>
+<meta name="theme-color" content="#000000">
+<style>
+  :root {
+    --font: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Inter", "Segoe UI", Roboto, sans-serif;
+    --accent: #e9d29a;
+    --violet: #8a2be2;
+    color-scheme: dark;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; min-height: 100%; }
+  body {
+    font-family: var(--font);
+    color: #f5f5f7;
+    background: radial-gradient(ellipse at 50% 120%, #2a1d0c 0%, #000 60%) fixed, #000;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: max(16px, env(safe-area-inset-top)) 16px 24px;
+    -webkit-font-smoothing: antialiased;
+    overscroll-behavior: none;
+  }
+  a.back {
+    align-self: flex-start;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 9px 16px 9px 10px;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    background: rgba(22, 24, 32, 0.55);
+    color: inherit;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 15px;
+  }
+  a.back svg { width: 20px; height: 20px; }
+  h1 { margin: 18px 0 4px; font-size: 30px; letter-spacing: -0.01em; }
+  .scores { display: flex; gap: 10px; margin: 8px 0 14px; }
+  .scores div {
+    padding: 8px 16px;
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.06);
+    text-align: center;
+    min-width: 110px;
+  }
+  .scores span { display: block; font-size: 12px; color: rgba(235, 235, 245, 0.6); }
+  .scores b { font-size: 22px; font-variant-numeric: tabular-nums; }
+  .board { position: relative; width: min(92vw, 480px); aspect-ratio: 1; }
+  canvas {
+    width: 100%;
+    height: 100%;
+    display: block;
+    border-radius: 22px;
+    background: #0b0c12;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6), 0 0 80px rgba(233, 210, 154, 0.08);
+    touch-action: none;
+  }
+  .overlay {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-content: center;
+    text-align: center;
+    gap: 6px;
+    border-radius: 22px;
+    background: rgba(5, 6, 10, 0.6);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    transition: opacity 0.25s;
+  }
+  .overlay.hidden { opacity: 0; pointer-events: none; }
+  .overlay strong { font-size: 26px; }
+  .overlay p { margin: 0; color: rgba(235, 235, 245, 0.7); font-size: 15px; }
+  .controls { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-top: 16px; }
+  button {
+    font: inherit;
+    font-weight: 600;
+    font-size: 15px;
+    padding: 11px 20px;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    background: rgba(255, 255, 255, 0.08);
+    color: inherit;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  button:hover { background: rgba(255, 255, 255, 0.16); }
+  button.primary { background: var(--violet); border-color: transparent; }
+  button.primary:hover { background: #9d4dee; }
+  .help { margin-top: 14px; font-size: 13px; color: rgba(235, 235, 245, 0.5); text-align: center; }
+</style>
+</head>
+<body>
+  <a class="back" href="index.html#saturn">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 5-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    Saturn
+  </a>
+  <h1>Snake</h1>
+  <div class="scores">
+    <div><span>Punkte</span><b id="score">0</b></div>
+    <div><span>Highscore</span><b id="highscore">0</b></div>
+    <div><span>Tempo</span><b id="speed">1</b></div>
+  </div>
+
+  <div class="board">
+    <canvas id="game" width="480" height="480" aria-label="Snake-Spielfeld"></canvas>
+    <div class="overlay" id="overlay">
+      <strong id="ov-title">Snake</strong>
+      <p id="ov-text">Drücke Starten, Leertaste oder tippe hier</p>
+    </div>
+  </div>
+
+  <div class="controls">
+    <button class="primary" id="start">Starten</button>
+    <button id="pause">Pause</button>
+    <button id="faster">Schneller</button>
+  </div>
+  <p class="help">Steuerung: Pfeiltasten / WASD · am Handy wischen · Leertaste = Pause</p>
+
+<script>
+(() => {
+  const canvas = document.getElementById('game');
+  const ctx = canvas.getContext('2d');
+  const CELLS = 24;
+  const SIZE = canvas.width / CELLS;
+  const SPEEDS = [150, 125, 105, 88, 74, 62, 52]; // ms pro Schritt
+  const $ = (id) => document.getElementById(id);
+
+  let highscore = 0;
+  try { highscore = Number(localStorage.getItem('snake-highscore') || localStorage.getItem('highscore')) || 0; } catch (e) {}
+  $('highscore').textContent = highscore;
+
+  let snake, dir, queue, apple, score, speedLevel = 0, running = false, over = false, last = 0, acc = 0, raf = 0;
+
+  function reset() {
+    snake = [{ x: 8, y: 12 }, { x: 7, y: 12 }, { x: 6, y: 12 }, { x: 5, y: 12 }];
+    dir = { x: 1, y: 0 };
+    queue = [];
+    score = 0;
+    over = false;
+    $('score').textContent = 0;
+    placeApple();
+  }
+
+  function placeApple() {
+    do {
+      apple = { x: Math.floor(Math.random() * CELLS), y: Math.floor(Math.random() * CELLS) };
+    } while (snake.some((s) => s.x === apple.x && s.y === apple.y));
+  }
+
+  function showOverlay(title, text) {
+    $('ov-title').textContent = title;
+    $('ov-text').textContent = text;
+    $('overlay').classList.remove('hidden');
+  }
+
+  function start() {
+    if (running) return;
+    if (over || !snake) reset();
+    running = true;
+    $('overlay').classList.add('hidden');
+    $('pause').textContent = 'Pause';
+    last = performance.now();
+    acc = 0;
+    raf = requestAnimationFrame(loop);
+  }
+
+  function pause() {
+    if (over || !snake) return;
+    if (running) {
+      running = false;
+      cancelAnimationFrame(raf);
+      $('pause').textContent = 'Weiter';
+      showOverlay('Pause', 'Weiter mit Leertaste oder Tippen');
+    } else {
+      start();
+    }
+  }
+
+  function faster() {
+    speedLevel = (speedLevel + 1) % SPEEDS.length;
+    $('speed').textContent = speedLevel + 1;
+    $('faster').textContent = speedLevel === SPEEDS.length - 1 ? 'Langsamer' : 'Schneller';
+  }
+
+  function gameOver() {
+    running = false;
+    over = true;
+    cancelAnimationFrame(raf);
+    showOverlay('Game Over', `${score} Punkte – nochmal? Tippe oder drücke Leertaste`);
+    $('start').textContent = 'Neustart';
+  }
+
+  function step() {
+    if (queue.length) dir = queue.shift();
+    const head = {
+      x: (snake[0].x + dir.x + CELLS) % CELLS,   // Rand: auf der anderen Seite wieder raus
+      y: (snake[0].y + dir.y + CELLS) % CELLS,
+    };
+    const eats = head.x === apple.x && head.y === apple.y;
+    const body = eats ? snake : snake.slice(0, -1);
+    if (body.some((s) => s.x === head.x && s.y === head.y)) return gameOver();
+    snake.unshift(head);
+    if (eats) {
+      score++;
+      $('score').textContent = score;
+      if (score > highscore) {
+        highscore = score;
+        $('highscore').textContent = highscore;
+        try { localStorage.setItem('snake-highscore', highscore); } catch (e) {}
+      }
+      placeApple();
+    } else {
+      snake.pop();
+    }
+  }
+
+  function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    // dezentes Raster
+    ctx.fillStyle = 'rgba(255,255,255,0.025)';
+    for (let x = 0; x < CELLS; x++) for (let y = 0; y < CELLS; y++) if ((x + y) % 2) ctx.fillRect(x * SIZE, y * SIZE, SIZE, SIZE);
+
+    // Apfel (leuchtend)
+    const ax = apple.x * SIZE + SIZE / 2, ay = apple.y * SIZE + SIZE / 2;
+    const g = ctx.createRadialGradient(ax, ay, 0, ax, ay, SIZE * 1.4);
+    g.addColorStop(0, 'rgba(255,90,70,0.55)');
+    g.addColorStop(1, 'rgba(255,90,70,0)');
+    ctx.fillStyle = g;
+    ctx.fillRect(ax - SIZE * 1.5, ay - SIZE * 1.5, SIZE * 3, SIZE * 3);
+    ctx.fillStyle = '#ff5a46';
+    ctx.beginPath();
+    ctx.arc(ax, ay, SIZE * 0.38, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Schlange: Verlauf von Gold zu Lila
+    snake.forEach((s, i) => {
+      const t = i / Math.max(1, snake.length - 1);
+      ctx.fillStyle = `hsl(${(42 - t * 130 + 360) % 360}, 75%, ${70 - t * 18}%)`;
+      const pad = i === 0 ? 1 : 2;
+      ctx.beginPath();
+      ctx.roundRect(s.x * SIZE + pad, s.y * SIZE + pad, SIZE - pad * 2, SIZE - pad * 2, 6);
+      ctx.fill();
+    });
+  }
+
+  function loop(now) {
+    if (!running) return;
+    acc += now - last;
+    last = now;
+    while (acc >= SPEEDS[speedLevel] && running) {
+      acc -= SPEEDS[speedLevel];
+      step();
+    }
+    draw();
+    if (running) raf = requestAnimationFrame(loop);
+  }
+
+  function turn(x, y) {
+    const lastDir = queue.length ? queue[queue.length - 1] : dir;
+    if (lastDir.x === -x && lastDir.y === -y) return;   // nicht umdrehen
+    if (lastDir.x === x && lastDir.y === y) return;
+    if (queue.length < 3) queue.push({ x, y });
+  }
+
+  const KEYS = {
+    ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1],
+    a: [-1, 0], d: [1, 0], w: [0, -1], s: [0, 1],
+  };
+  document.addEventListener('keydown', (e) => {
+    const k = KEYS[e.key.length === 1 ? e.key.toLowerCase() : e.key];
+    if (k) {
+      e.preventDefault();
+      if (!running && !over) start();
+      turn(...k);
+    } else if (e.key === ' ') {
+      e.preventDefault();
+      running ? pause() : start();
+    }
+  });
+
+  // Wischen auf dem Handy
+  let touch = null, lastTouch = 0;
+  const board = document.querySelector('.board');
+  board.addEventListener('touchstart', (e) => { touch = e.touches[0]; }, { passive: true });
+  board.addEventListener('touchmove', (e) => e.preventDefault(), { passive: false });
+  board.addEventListener('touchend', (e) => {
+    if (!touch) return;
+    lastTouch = Date.now();
+    const t = e.changedTouches[0];
+    const dx = t.clientX - touch.clientX, dy = t.clientY - touch.clientY;
+    touch = null;
+    if (Math.max(Math.abs(dx), Math.abs(dy)) < 24) { running ? pause() : start(); return; }
+    if (!running) start();
+    Math.abs(dx) > Math.abs(dy) ? turn(Math.sign(dx), 0) : turn(0, Math.sign(dy));
+  });
+  board.addEventListener('click', () => { if (Date.now() - lastTouch > 700 && !running) start(); });
+
+  $('start').addEventListener('click', () => { if (running) { running = false; cancelAnimationFrame(raf); } over = true; start(); $('start').textContent = 'Neustart'; });
+  $('pause').addEventListener('click', pause);
+  $('faster').addEventListener('click', faster);
+
+  reset();
+  draw();
+})();
+</script>
+</body>
+</html>
