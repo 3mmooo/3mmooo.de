@@ -120,6 +120,7 @@ export const PLANETS = [
     text: `<p>Der rote Planet – Werkzeuge und Ressourcen für offensive Sicherheit.</p>
       <p class="note">Nur für autorisierte Tests und Lernzwecke verwenden.</p>`,
     links: [
+      { title: 'Hack the Mars Base', desc: 'CTF-Challenge: knacke den Login in 5 Leveln', url: 'hack.html', internal: true, highlight: true },
       { title: 'Kali Linux', desc: 'Distribution für Penetrationstests', url: 'https://www.kali.org/' },
       { title: 'Reverse Shell Generator', desc: 'Reverse-Shell-Payloads für Pentests erzeugen', url: 'https://revshells.com/' },
       { title: 'ASCII Generator', desc: 'Text in ASCII-Art umwandeln', url: 'https://ascii-generator.site/' },
@@ -196,13 +197,15 @@ export const PLANETS = [
     atmosphere: { color: '#b5f3ff', strength: 0.8 },
     L0: 313.23, n: 0.01173,
     // TODO: Beschreibungen und Download-Links eintragen, sobald die Dateien online sind
-    text: `<p>Eigene Netzwerk- und Admin-Tools zum Download.</p>`,
+    text: `<p>Eigene Netzwerk- und Admin-Tools. Die Python-Tools gibt es mit Quellcode auf GitHub.</p>`,
     links: [
       { title: 'SubCalculator', desc: 'Subnetz-Rechner', soon: true },
       { title: 'NiP-NWTool', desc: 'Netzwerk-Tool', soon: true },
       { title: 'DuD-NWTool', desc: 'Netzwerk-Tool', soon: true },
       { title: 'AD-Tool', desc: 'Active-Directory-Tool', soon: true },
-      { title: 'FontChecker', desc: 'Schriftarten prüfen', soon: true },
+      { title: 'PortChecker', desc: 'Python-GUI: IP-Bereiche auf offene Ports scannen', url: 'https://github.com/3mmooo/Portchecker' },
+      { title: 'FontChecker', desc: 'Python-GUI: Schriftarten, Größen & Farben testen', url: 'https://github.com/3mmooo/fontchecker' },
+      { title: 'Scropy', desc: 'Text aus dem neuesten Screenshot per OCR kopieren', url: 'https://github.com/3mmooo/-Scropy' },
     ],
     facts: [
       ['Durchmesser', '50.724 km'],

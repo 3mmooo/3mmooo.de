@@ -84,7 +84,7 @@ export function createUI({ order, onSelect, onBack }) {
           <span class="lc-text"><span class="t">${esc(l.title)}</span><span class="d">${esc(l.desc || '')}</span></span>
           <span class="badge">Download folgt</span>
         </div>` : `
-        <a class="link-card" href="${esc(l.url)}" ${l.internal ? '' : 'target="_blank" rel="noopener noreferrer"'}>
+        <a class="link-card${l.highlight ? ' highlight' : ''}" href="${esc(l.url)}" ${l.internal ? '' : 'target="_blank" rel="noopener noreferrer"'}>
           <span class="lc-text"><span class="t">${esc(l.title)}</span><span class="d">${esc(l.desc || '')}</span></span>
           ${l.internal ? CHEVRON : ARROW}
         </a>`).join('') + '</div>';

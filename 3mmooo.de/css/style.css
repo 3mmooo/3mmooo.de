@@ -325,6 +325,11 @@ a.link-card:hover, button.link-card:hover { background: rgba(255, 255, 255, 0.12
 .lc-text .t { font-size: 15px; font-weight: 600; }
 .lc-text .d { font-size: 13px; color: var(--muted); }
 .link-card.soon { cursor: default; }
+.link-card.highlight {
+  border-color: color-mix(in srgb, var(--accent) 55%, transparent);
+  background: color-mix(in srgb, var(--accent) 16%, transparent);
+}
+.link-card.highlight .t { color: #fff; }
 .badge {
   flex: none;
   font-size: 11px;

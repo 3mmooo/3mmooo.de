@@ -1,0 +1,797 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Hack the Mars Base – 3mmooo.de</title>
+<meta name="description" content="CTF-Challenge auf 3mmooo.de: Hacke dich in 5 Leveln in den Login der Mars-Basis – Quelltext, Base64, Cookies, SQL-Injection und Hash-Cracking.">
+<meta name="theme-color" content="#000000">
+<style>
+  :root {
+    --bg: #07080c;
+    --panel: rgba(24, 20, 22, 0.72);
+    --line: rgba(255, 255, 255, 0.1);
+    --text: #f5f5f7;
+    --muted: rgba(235, 235, 245, 0.6);
+    --mars: #ff6b4a;
+    --mars-dim: rgba(255, 107, 74, 0.14);
+    --ok: #4ade80;
+    --err: #ff5d5d;
+    --font: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Inter", "Segoe UI", Roboto, sans-serif;
+    --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+    color-scheme: dark;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body {
+    min-height: 100vh;
+    font-family: var(--font);
+    color: var(--text);
+    background:
+      radial-gradient(1200px 600px at 80% -10%, rgba(255, 107, 74, 0.18), transparent 60%),
+      radial-gradient(900px 500px at -10% 110%, rgba(138, 43, 226, 0.12), transparent 60%),
+      var(--bg);
+    -webkit-font-smoothing: antialiased;
+    padding: max(16px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) 40px max(16px, env(safe-area-inset-left));
+  }
+  .wrap { max-width: 860px; margin: 0 auto; display: flex; flex-direction: column; gap: 22px; }
+  a { color: var(--mars); }
+  button { font: inherit; color: inherit; }
+
+  .back {
+    align-self: flex-start;
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 9px 16px 9px 10px;
+    border-radius: 999px;
+    border: 1px solid var(--line);
+    background: var(--panel);
+    color: inherit; text-decoration: none;
+    font-weight: 600; font-size: 15px;
+  }
+  .back svg { width: 20px; height: 20px; }
+
+  header h1 { margin: 6px 0 6px; font-size: clamp(32px, 6vw, 48px); letter-spacing: -0.02em; line-height: 1.05; text-wrap: balance; }
+  header h1 span { color: var(--mars); }
+  header p { margin: 0; color: var(--muted); font-size: 16px; line-height: 1.5; max-width: 62ch; }
+
+  /* Fortschritt */
+  .progress { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
+  .step {
+    display: flex; flex-direction: column; gap: 3px; align-items: flex-start;
+    padding: 10px 12px;
+    border-radius: 14px;
+    border: 1px solid var(--line);
+    background: rgba(255, 255, 255, 0.03);
+    cursor: pointer; text-align: left;
+    transition: background 0.2s, border-color 0.2s;
+    min-width: 0;
+  }
+  .step .k { font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
+  .step .t { font-size: 13.5px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+  .step:hover:not([disabled]) { background: rgba(255, 255, 255, 0.07); }
+  .step.active { border-color: var(--mars); background: var(--mars-dim); }
+  .step.solved .k { color: var(--ok); }
+  .step[disabled] { opacity: 0.4; cursor: not-allowed; }
+  .step:focus-visible { outline: 2px solid var(--mars); outline-offset: 2px; }
+  @media (max-width: 620px) {
+    .progress { gap: 6px; }
+    .step { align-items: center; padding: 10px 4px; }
+    .step .t { display: none; }
+    .step .k { font-size: 11px; letter-spacing: 0.04em; white-space: nowrap; }
+  }
+
+  /* Level */
+  .level {
+    border-radius: 24px;
+    border: 1px solid var(--line);
+    background: var(--panel);
+    -webkit-backdrop-filter: blur(20px); backdrop-filter: blur(20px);
+    padding: 26px 24px;
+    display: flex; flex-direction: column; gap: 16px;
+  }
+  .eyebrow { margin: 0; font-size: 12.5px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--mars); }
+  .level h2 { margin: -8px 0 0; font-size: 28px; letter-spacing: -0.01em; }
+  .story { margin: 0; font-size: 15.5px; line-height: 1.55; color: rgba(255, 255, 255, 0.86); max-width: 66ch; }
+  .goal {
+    margin: 0; padding: 10px 14px; border-radius: 12px;
+    background: rgba(255, 255, 255, 0.05);
+    font-size: 14.5px;
+  }
+  .goal b { color: var(--mars); }
+
+  .terminal-login {
+    display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr); gap: 14px;
+  }
+  @media (max-width: 720px) { .terminal-login { grid-template-columns: 1fr; } }
+
+  form.login {
+    display: flex; flex-direction: column; gap: 10px;
+    padding: 18px; border-radius: 18px;
+    background: rgba(0, 0, 0, 0.35);
+    border: 1px solid var(--line);
+  }
+  form.login .brand { font-family: var(--mono); font-size: 12px; color: var(--muted); letter-spacing: 0.05em; }
+  label { display: flex; flex-direction: column; gap: 5px; font-size: 13px; color: var(--muted); }
+  input {
+    font: 15px var(--mono);
+    color: var(--text);
+    padding: 10px 12px;
+    border-radius: 10px;
+    border: 1px solid var(--line);
+    background: rgba(255, 255, 255, 0.06);
+    outline: none;
+    min-width: 0;
+  }
+  input:focus { border-color: var(--mars); }
+  .btn {
+    padding: 11px 18px; border-radius: 999px; border: 1px solid var(--line);
+    background: rgba(255, 255, 255, 0.08); font-weight: 600; font-size: 14.5px; cursor: pointer;
+    transition: background 0.2s;
+  }
+  .btn:hover { background: rgba(255, 255, 255, 0.15); }
+  .btn.primary { background: var(--mars); border-color: transparent; color: #1a0703; }
+  .btn.primary:hover { background: #ff8467; }
+  .btn:focus-visible { outline: 2px solid var(--mars); outline-offset: 2px; }
+  .row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+
+  .term {
+    margin: 0;
+    padding: 14px 16px;
+    min-height: 180px;
+    max-height: 300px;
+    overflow: auto;
+    border-radius: 18px;
+    background: #050608;
+    border: 1px solid var(--line);
+    font: 12.5px/1.6 var(--mono);
+    color: #c8ccd6;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+  .term .ok { color: var(--ok); }
+  .term .err { color: var(--err); }
+  .term .info { color: #8fb3ff; }
+  .term .dim { color: #6b7280; }
+
+  pre.code {
+    margin: 0; padding: 14px 16px; border-radius: 14px;
+    background: #050608; border: 1px solid var(--line);
+    font: 12.5px/1.6 var(--mono); color: #c8ccd6;
+    overflow-x: auto;
+  }
+
+  .hints { display: flex; flex-direction: column; gap: 8px; }
+  .hint {
+    margin: 0; padding: 10px 14px; border-radius: 12px;
+    border-left: 3px solid #8fb3ff; background: rgba(143, 179, 255, 0.08);
+    font-size: 14px; line-height: 1.5;
+  }
+  .hint code, .story code, .solved code { font-family: var(--mono); font-size: 0.92em; background: rgba(255,255,255,0.08); padding: 1px 5px; border-radius: 5px; }
+
+  .solved {
+    padding: 18px; border-radius: 18px;
+    background: rgba(74, 222, 128, 0.08);
+    border: 1px solid rgba(74, 222, 128, 0.35);
+    display: flex; flex-direction: column; gap: 10px;
+  }
+  .solved h3 { margin: 0; font-size: 18px; color: var(--ok); }
+  .flag {
+    font: 600 15px var(--mono);
+    padding: 10px 12px; border-radius: 10px;
+    background: rgba(0, 0, 0, 0.4);
+    user-select: all;
+    word-break: break-all;
+  }
+  .solved p { margin: 0; font-size: 14.5px; line-height: 1.55; color: rgba(255, 255, 255, 0.85); }
+  .solved .lesson b { color: #fff; }
+
+  .finale { text-align: center; align-items: center; }
+  .finale h2 { margin: 0; font-size: 34px; }
+  .flags-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; width: 100%; max-width: 520px; }
+  .flags-list li { font: 13.5px var(--mono); padding: 8px 12px; border-radius: 10px; background: rgba(0, 0, 0, 0.35); text-align: left; word-break: break-all; }
+
+  footer { color: var(--muted); font-size: 13px; line-height: 1.6; max-width: 70ch; }
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <a class="back" href="index.html#mars">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 5-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    Mars
+  </a>
+
+  <header>
+    <h1>Hack the <span>Mars Base</span></h1>
+    <p>Die Forschungsstation auf dem Mars hat ein Login-System. Leider wurde es unter Zeitdruck gebaut.
+       Finde in jedem Level einen Weg hinein und sammle alle 5 Flags. Entwicklertools (F12) sind ausdrücklich erlaubt.</p>
+  </header>
+
+  <nav class="progress" id="progress" aria-label="Level"></nav>
+
+  <!-- ===================================================== LEVEL 1 -->
+  <section class="level" data-level="1" hidden>
+    <p class="eyebrow">Level 1 von 5 · Aufklärung</p>
+    <h2>Der vergessene Kommentar</h2>
+    <p class="story">Das Login-Portal der Station ist gerade erst live gegangen. Der Entwickler war in Eile –
+      vielleicht hat er beim Testen etwas liegen lassen, das niemand sehen sollte.</p>
+    <p class="goal">Ziel: Melde dich als <b>admin</b> an.</p>
+    <div class="terminal-login">
+      <form class="login" data-form="1" autocomplete="off">
+        <span class="brand">MARS-BASE // PORTAL v0.9</span>
+        <label>Benutzername <input name="user" id="l1-user" spellcheck="false"></label>
+        <label>Passwort <input name="pass" id="l1-pass" type="password"></label>
+        <button class="btn primary" type="submit">Anmelden</button>
+      </form>
+      <pre class="term" data-term="1"></pre>
+    </div>
+    <!-- TODO vor dem Go-Live entfernen!!! Testzugang: admin / r0ver-2024! -->
+    <div class="hints" data-hints="1"></div>
+    <div class="row"><button class="btn" data-hint-btn="1">Tipp anzeigen</button></div>
+    <div class="solved" data-solved="1" hidden></div>
+  </section>
+
+  <!-- ===================================================== LEVEL 2 -->
+  <section class="level" data-level="2" hidden>
+    <p class="eyebrow">Level 2 von 5 · Client-Side</p>
+    <h2>Der Wächter im Browser</h2>
+    <p class="story">Nach dem Vorfall wurde der Kommentar entfernt. Neues Konzept: Damit der Server
+      entlastet wird, prüft jetzt der Browser selbst, ob das Passwort stimmt. Und es ist „verschlüsselt“.</p>
+    <p class="goal">Ziel: Finde das Admin-Passwort und melde dich als <b>admin</b> an.</p>
+    <div class="terminal-login">
+      <form class="login" data-form="2" autocomplete="off">
+        <span class="brand">MARS-BASE // PORTAL v1.0 (offline-fähig)</span>
+        <label>Benutzername <input name="user" id="l2-user" spellcheck="false"></label>
+        <label>Passwort <input name="pass" id="l2-pass" type="password"></label>
+        <button class="btn primary" type="submit">Anmelden</button>
+      </form>
+      <pre class="term" data-term="2"></pre>
+    </div>
+    <div class="hints" data-hints="2"></div>
+    <div class="row"><button class="btn" data-hint-btn="2">Tipp anzeigen</button></div>
+    <div class="solved" data-solved="2" hidden></div>
+  </section>
+
+  <!-- ===================================================== LEVEL 3 -->
+  <section class="level" data-level="3" hidden>
+    <p class="eyebrow">Level 3 von 5 · Session</p>
+    <h2>Der Gastausweis</h2>
+    <p class="story">Inzwischen prüft ein Server die Passwörter. Für Besucher gibt es einen
+      Gastzugang: <code>gast</code> / <code>gast</code>. Der Admin-Bereich bleibt Gästen natürlich verschlossen.
+      Oder? Der Server merkt sich deine Sitzung in einem Cookie.</p>
+    <p class="goal">Ziel: Öffne die <b>Admin-Konsole</b>.</p>
+    <div class="terminal-login">
+      <form class="login" data-form="3" autocomplete="off">
+        <span class="brand">MARS-BASE // PORTAL v2.0</span>
+        <label>Benutzername <input name="user" id="l3-user" spellcheck="false"></label>
+        <label>Passwort <input name="pass" id="l3-pass" type="password"></label>
+        <div class="row">
+          <button class="btn primary" type="submit">Anmelden</button>
+          <button class="btn" type="button" data-admin-btn>Admin-Konsole öffnen</button>
+        </div>
+      </form>
+      <pre class="term" data-term="3"></pre>
+    </div>
+    <div class="hints" data-hints="3"></div>
+    <div class="row"><button class="btn" data-hint-btn="3">Tipp anzeigen</button></div>
+    <div class="solved" data-solved="3" hidden></div>
+  </section>
+
+  <!-- ===================================================== LEVEL 4 -->
+  <section class="level" data-level="4" hidden>
+    <p class="eyebrow">Level 4 von 5 · Injection</p>
+    <h2>Die Datenbank plaudert</h2>
+    <p class="story">Version 3 speichert Benutzer in einer SQL-Datenbank. Die Sitzung ist jetzt sicher signiert.
+      Aus Versehen ist aber noch der Debug-Modus an und zeigt jede SQL-Abfrage im Log.
+      Das Admin-Passwort ist lang und zufällig, Raten ist zwecklos.</p>
+    <p class="goal">Ziel: Melde dich als <b>admin</b> an, ohne das Passwort zu kennen.</p>
+    <div class="terminal-login">
+      <form class="login" data-form="4" autocomplete="off">
+        <span class="brand">MARS-BASE // PORTAL v3.0 · DEBUG=1</span>
+        <label>Benutzername <input name="user" id="l4-user" spellcheck="false"></label>
+        <label>Passwort <input name="pass" id="l4-pass" type="text" spellcheck="false"></label>
+        <button class="btn primary" type="submit">Anmelden</button>
+      </form>
+      <pre class="term" data-term="4"></pre>
+    </div>
+    <div class="hints" data-hints="4"></div>
+    <div class="row"><button class="btn" data-hint-btn="4">Tipp anzeigen</button></div>
+    <div class="solved" data-solved="4" hidden></div>
+  </section>
+
+  <!-- ===================================================== LEVEL 5 -->
+  <section class="level" data-level="5" hidden>
+    <p class="eyebrow">Level 5 von 5 · Kryptografie</p>
+    <h2>Das geleakte Backup</h2>
+    <p class="story">Alle Lücken sind gestopft, Prepared Statements überall. Dumm nur, dass jemand eine
+      Sicherung der Benutzertabelle auf einem offenen Server vergessen hat. Die Passwörter sind gehasht,
+      also eigentlich sicher.</p>
+    <pre class="code" aria-label="Inhalt von users.bak">-- users.bak  (mars-base, 2024-05-30)
+-- algo: sha1(password)
++----+----------+------------------------------------------+
+| id | user     | password_hash                            |
++----+----------+------------------------------------------+
+|  1 | admin    | 327156ab287c6aa52c8670e13163fc1bf660add4 |
+|  2 | kowalski | 5627901a8bb14d1a606ad3ae51c72de87d2c79d1 |
+|  3 | gast     | 0e110f6bafda86368db93664dfc5cdc3c05471ac |
++----+----------+------------------------------------------+</pre>
+    <p class="goal">Ziel: Knacke den Hash und melde dich als <b>admin</b> an.</p>
+    <div class="terminal-login">
+      <form class="login" data-form="5" autocomplete="off">
+        <span class="brand">MARS-BASE // PORTAL v4.0</span>
+        <label>Benutzername <input name="user" id="l5-user" spellcheck="false"></label>
+        <label>Passwort <input name="pass" id="l5-pass" type="password"></label>
+        <button class="btn primary" type="submit">Anmelden</button>
+      </form>
+      <pre class="term" data-term="5"></pre>
+    </div>
+    <div class="hints" data-hints="5"></div>
+    <div class="row"><button class="btn" data-hint-btn="5">Tipp anzeigen</button></div>
+    <div class="solved" data-solved="5" hidden></div>
+  </section>
+
+  <!-- ===================================================== FINALE -->
+  <section class="level finale" id="finale" hidden>
+    <p class="eyebrow">Mission erfüllt</p>
+    <h2>Die Mars-Basis gehört dir 🚀</h2>
+    <p class="story" id="finale-text"></p>
+    <ul class="flags-list" id="flags-list"></ul>
+    <div class="row">
+      <button class="btn" id="reset">Von vorne beginnen</button>
+      <a class="btn" href="index.html#mars" style="text-decoration:none">Zurück zum Mars</a>
+    </div>
+  </section>
+
+  <footer>
+    Alles auf dieser Seite läuft nur in deinem Browser. Es gibt keinen echten Server, und kein echtes System wird angegriffen.
+    Die Level zeigen typische Schwachstellen zum Lernen. Teste solche Techniken in der echten Welt nur an Systemen,
+    für die du eine ausdrückliche Erlaubnis hast.
+  </footer>
+</div>
+
+<!-- Level 2: Login-Prüfung im Client (absichtlich unsicher!) -->
+<script id="l2-auth">
+  function checkLogin(user, pass) {
+    // Passwort ist verschlüsselt, also kann es keiner lesen ;)
+    const secret = 'b2x5bXB1c19tb25z';
+    return user === 'admin' && btoa(pass) === secret;
+  }
+</script>
+
+<script>
+(() => {
+  'use strict';
+
+  const STORE = 'mars-ctf-v1';
+  const LEVELS = [
+    { n: 1, label: 'Aufklärung', tag: 'quelltext' },
+    { n: 2, label: 'Client-Side', tag: 'base64' },
+    { n: 3, label: 'Session', tag: 'cookie' },
+    { n: 4, label: 'Injection', tag: 'sqli' },
+    { n: 5, label: 'Kryptografie', tag: 'hash' },
+  ];
+
+  const HINTS = {
+    1: [
+      'Was der Browser anzeigt, ist nicht alles, was er vom Server bekommen hat.',
+      'Rechtsklick → <b>Seitenquelltext anzeigen</b> (oder <code>Strg+U</code>) und nach Level 1 suchen.',
+      'Entwickler hinterlassen gerne <code>&lt;!-- Kommentare --&gt;</code> mit „TODO“.',
+    ],
+    2: [
+      'Wenn der Browser das Passwort prüft, muss der Browser es auch irgendwie kennen.',
+      'Öffne die Entwicklertools (F12) und suche im Quelltext nach <code>checkLogin</code>.',
+      '<code>btoa()</code> ist Base64. Das ist keine Verschlüsselung, sondern nur eine Kodierung. <code>atob()</code> macht es rückgängig.',
+    ],
+    3: [
+      'Melde dich zuerst als Gast an und schau, was sich dabei im Browser ändert.',
+      'F12 → <b>Application</b> (Chrome) bzw. <b>Speicher</b> (Firefox) → Cookies. Der Wert von <code>mars_session</code> sieht aus wie Base64.',
+      'Dekodieren, <code>"role"</code> ändern, wieder kodieren und zurückschreiben, z. B. in der Konsole: <code>document.cookie = "mars_session=..."</code>',
+    ],
+    4: [
+      'Schau dir die SQL-Abfrage im Log genau an. Was passiert mit deinen Eingaben?',
+      'Was passiert, wenn dein Benutzername ein <code>\'</code> (Hochkomma) enthält?',
+      'Mit <code>--</code> beginnt in SQL ein Kommentar. Alles danach wird ignoriert, auch die Passwortprüfung.',
+    ],
+    5: [
+      'SHA-1 ohne „Salt“: Gleiche Passwörter ergeben immer gleiche Hashes. Dafür gibt es riesige vorberechnete Tabellen.',
+      'Probier den Hash bei einem Hash-Lookup-Dienst wie CrackStation oder mit <code>hashcat -m 100</code> und der Wortliste <code>rockyou.txt</code>.',
+      'Das Passwort ist ein sehr bekannter Weltraum-Filmtitel, klein geschrieben und ohne Leerzeichen.',
+    ],
+  };
+
+  const LESSONS = {
+    1: '<b>Schwachstelle:</b> Zugangsdaten in einem HTML-Kommentar. Kommentare werden mit an jeden Besucher ausgeliefert. <b>So geht’s richtig:</b> Niemals Geheimnisse in Frontend-Code, Testzugänge vor dem Livegang löschen, Secret-Scanner im Build einsetzen.',
+    2: '<b>Schwachstelle:</b> Die Passwortprüfung findet im Browser statt, und Base64 ist nur eine Kodierung. <b>So geht’s richtig:</b> Authentifizierung immer auf dem Server, Passwörter nur als starken Hash speichern, nie im Client.',
+    3: '<b>Schwachstelle:</b> Die Rolle steht unsigniert im Cookie, der Server vertraut dem Client. <b>So geht’s richtig:</b> Nur eine zufällige Session-ID im Cookie (<code>HttpOnly</code>, <code>Secure</code>), Rechte serverseitig nachschlagen, oder Tokens signieren und die Signatur prüfen.',
+    4: '<b>Schwachstelle:</b> SQL-Injection, weil Eingaben direkt in die Abfrage geklebt werden. <b>So geht’s richtig:</b> Prepared Statements bzw. parametrisierte Queries, nie String-Verkettung. Debug-Ausgaben gehören nicht in Produktion.',
+    5: '<b>Schwachstelle:</b> Schneller Hash (SHA-1) ohne Salt plus ein Passwort aus jeder Wortliste. <b>So geht’s richtig:</b> Argon2id oder bcrypt mit Salt, lange Passwörter erzwingen und gegen bekannte Leaks prüfen.',
+  };
+
+  // ---------- Speicher ----------
+  function load() {
+    try { return JSON.parse(localStorage.getItem(STORE)) || null; } catch { return null; }
+  }
+  function save() {
+    try { localStorage.setItem(STORE, JSON.stringify(state)); } catch {}
+  }
+  let state = load() || { solved: {}, start: null, end: null, hints: {} };
+  if (!state.hints) state.hints = {};
+  if (!state.start) { state.start = Date.now(); save(); }
+
+  // ---------- Krypto ----------
+  const enc = new TextEncoder();
+  const hasSubtle = !!(window.crypto && crypto.subtle);
+  async function hash(algo, text) {
+    const buf = await crypto.subtle.digest(algo, enc.encode(text));
+    return [...new Uint8Array(buf)].map((b) => b.toString(16).padStart(2, '0')).join('');
+  }
+  async function makeFlag(level, secret) {
+    const h = await hash('SHA-256', `mars-base|${level}|${secret}`);
+    return `FLAG{${LEVELS[level - 1].tag}_${h.slice(0, 10)}}`;
+  }
+
+  // ---------- DOM-Helfer ----------
+  const $ = (s, el = document) => el.querySelector(s);
+  const $$ = (s, el = document) => [...el.querySelectorAll(s)];
+  const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+  function log(n, text, kind = '') {
+    const term = $(`[data-term="${n}"]`);
+    const time = new Date().toLocaleTimeString('de-DE');
+    term.insertAdjacentHTML('beforeend', `<span class="dim">[${time}]</span> <span class="${kind}">${esc(text)}</span>\n`);
+    term.scrollTop = term.scrollHeight;
+  }
+
+  function unlocked(n) { return n === 1 || !!state.solved[n - 1]; }
+  let current = 1;
+
+  function renderProgress() {
+    const nav = $('#progress');
+    nav.innerHTML = LEVELS.map(({ n, label }) => {
+      const s = state.solved[n], u = unlocked(n);
+      return `<button class="step${s ? ' solved' : ''}${n === current ? ' active' : ''}" data-go="${n}" ${u ? '' : 'disabled'}
+        aria-label="Level ${n}: ${label}${s ? ' (gelöst)' : u ? '' : ' (gesperrt)'}">
+        <span class="k">${s ? '✓ ' : u ? '' : '🔒 '}Level ${n}</span><span class="t">${label}</span></button>`;
+    }).join('');
+    $$('[data-go]', nav).forEach((b) => b.addEventListener('click', () => show(+b.dataset.go)));
+  }
+
+  function renderSolved(n) {
+    const box = $(`[data-solved="${n}"]`);
+    const s = state.solved[n];
+    if (!s) { box.hidden = true; return; }
+    box.hidden = false;
+    box.innerHTML = `
+      <h3>Zugang erhalten ✓</h3>
+      <div class="flag">${esc(s.flag)}</div>
+      <p class="lesson">${LESSONS[n]}</p>
+      <div class="row">${n < 5
+        ? `<button class="btn primary" data-next="${n + 1}">Weiter zu Level ${n + 1}</button>`
+        : '<button class="btn primary" data-finale>Zum Abschluss</button>'}</div>`;
+    $('[data-next]', box)?.addEventListener('click', () => show(n + 1));
+    $('[data-finale]', box)?.addEventListener('click', () => show('finale'));
+  }
+
+  function renderHints(n) {
+    const count = state.hints[n] || 0;
+    $(`[data-hints="${n}"]`).innerHTML = HINTS[n].slice(0, count).map((h, i) => `<p class="hint"><b>Tipp ${i + 1}:</b> ${h}</p>`).join('');
+    const btn = $(`[data-hint-btn="${n}"]`);
+    btn.hidden = count >= HINTS[n].length;
+    btn.textContent = count ? 'Noch ein Tipp' : 'Tipp anzeigen';
+  }
+
+  function show(n) {
+    if (n !== 'finale' && !unlocked(n)) return;
+    current = n === 'finale' ? 6 : n;
+    $$('section.level').forEach((s) => { s.hidden = true; });
+    if (n === 'finale') {
+      renderFinale();
+      $('#finale').hidden = false;
+    } else {
+      const sec = $(`section[data-level="${n}"]`);
+      sec.hidden = false;
+      renderSolved(n);
+      renderHints(n);
+      const term = $(`[data-term="${n}"]`);
+      if (!term.textContent) bootTerm(n);
+    }
+    renderProgress();
+    try { history.replaceState(null, '', n === 'finale' ? '#finale' : `#level${n}`); } catch {}
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  async function solve(n, secret) {
+    if (!state.solved[n]) {
+      state.solved[n] = { flag: await makeFlag(n, secret), at: Date.now() };
+      if (Object.keys(state.solved).length === 5 && !state.end) state.end = Date.now();
+      save();
+    }
+    log(n, `FLAG freigeschaltet: ${state.solved[n].flag}`, 'ok');
+    renderSolved(n);
+    renderProgress();
+  }
+
+  function bootTerm(n) {
+    const boot = {
+      1: ['Verbindung zu portal.mars-base.local hergestellt', 'Bitte anmelden.'],
+      2: ['Offline-Modus aktiv: Prüfung erfolgt lokal (checkLogin)', 'Bitte anmelden.'],
+      3: ['Session-Verwaltung: Cookie „mars_session“', 'Gastzugang: gast / gast'],
+      4: ['DB: mysql://db.mars-base.local/portal', 'DEBUG=1: SQL-Abfragen werden protokolliert'],
+      5: ['Hash-Verfahren: sha1(password)', 'Bitte anmelden.'],
+    }[n];
+    boot.forEach((l) => log(n, l, 'info'));
+  }
+
+  // ---------- Level 1: Kommentar im Quelltext ----------
+  const L1_HASH = '90d4d7b30cc765317567111d99beedccb51f1ddaa2c0c4ee4d36b070e3f98221';
+  async function level1(user, pass) {
+    log(1, `POST /login  user=${user}`);
+    if (user === 'admin' && await hash('SHA-256', pass) === L1_HASH) {
+      log(1, '200 OK – Willkommen, admin.', 'ok');
+      return solve(1, pass);
+    }
+    log(1, user === 'admin' ? '401 Unauthorized – Passwort falsch' : '401 Unauthorized – Benutzer unbekannt oder Passwort falsch', 'err');
+  }
+
+  // ---------- Level 2: Prüfung im Client ----------
+  async function level2(user, pass) {
+    log(2, `checkLogin("${user}", "${'•'.repeat(pass.length)}")`);
+    if (window.checkLogin(user, pass)) {
+      log(2, 'true – Willkommen, admin.', 'ok');
+      return solve(2, pass);
+    }
+    log(2, 'false – Zugriff verweigert', 'err');
+  }
+
+  // ---------- Level 3: unsigniertes Session-Cookie ----------
+  const COOKIE = 'mars_session';
+  function readSession() {
+    const m = document.cookie.split(';').map((c) => c.trim()).find((c) => c.startsWith(COOKIE + '='));
+    if (!m) return null;
+    let raw = decodeURIComponent(m.slice(COOKIE.length + 1));
+    try { return { raw, data: JSON.parse(atob(raw)) }; } catch { return { raw, data: null }; }
+  }
+  async function level3(user, pass) {
+    log(3, `POST /login  user=${user}`);
+    if (user === 'gast' && pass === 'gast') {
+      const value = btoa(JSON.stringify({ user: 'gast', role: 'guest', base: 'mars-1' }));
+      document.cookie = `${COOKIE}=${value}; SameSite=Lax`;
+      log(3, '200 OK – Willkommen, gast.', 'ok');
+      log(3, `Set-Cookie: ${COOKIE}=${value}`, 'info');
+      return;
+    }
+    if (user === 'admin') return log(3, '401 Unauthorized – Admin-Login nur aus dem internen Netz', 'err');
+    log(3, '401 Unauthorized – Benutzer unbekannt oder Passwort falsch', 'err');
+  }
+  async function openAdmin() {
+    log(3, 'GET /admin');
+    const s = readSession();
+    if (!s) return log(3, '401 Unauthorized – keine Sitzung. Bitte zuerst anmelden.', 'err');
+    log(3, `Cookie: ${COOKIE}=${s.raw}`, 'dim');
+    if (!s.data) return log(3, '400 Bad Request – Sitzung beschädigt (kein gültiges Base64-JSON)', 'err');
+    log(3, `Sitzung: user=${s.data.user}, role=${s.data.role}`, 'info');
+    if (String(s.data.role).toLowerCase() === 'admin') {
+      log(3, '200 OK – Admin-Konsole geöffnet.', 'ok');
+      return solve(3, 'role=admin');
+    }
+    log(3, `403 Forbidden – Rolle „${s.data.role}“ hat keinen Zugriff`, 'err');
+  }
+
+  // ---------- Level 4: SQL-Injection (Mini-SQL-Interpreter) ----------
+  const randomPass = () => [...crypto.getRandomValues(new Uint8Array(18))].map((b) => b.toString(36).padStart(2, '0')).join('');
+  const USERS = [
+    { id: 1, user: 'admin', pass: randomPass() },
+    { id: 2, user: 'kowalski', pass: randomPass() },
+    { id: 3, user: 'gast', pass: 'gast' },
+  ];
+
+  class SqlError extends Error {}
+
+  function tokenize(src) {
+    const t = [];
+    let i = 0;
+    while (i < src.length) {
+      const c = src[i];
+      if (/\s/.test(c)) { i++; continue; }
+      if (src.startsWith('--', i) || c === '#') break;               // Kommentar bis Zeilenende
+      if (src.startsWith('/*', i)) {
+        const e = src.indexOf('*/', i + 2);
+        if (e < 0) break;
+        i = e + 2; continue;
+      }
+      if (c === "'" || c === '"') {
+        let j = i + 1, s = '';
+        for (;;) {
+          if (j >= src.length) throw new SqlError(`You have an error in your SQL syntax; unterminated string near '${src.slice(i, i + 20)}'`);
+          if (src[j] === c && src[j + 1] === c) { s += c; j += 2; continue; }
+          if (src[j] === c) break;
+          s += src[j++];
+        }
+        t.push({ type: 'str', value: s });
+        i = j + 1; continue;
+      }
+      const num = /^\d+(\.\d+)?/.exec(src.slice(i));
+      if (num) { t.push({ type: 'num', value: parseFloat(num[0]) }); i += num[0].length; continue; }
+      const id = /^[A-Za-z_][A-Za-z0-9_]*/.exec(src.slice(i));
+      if (id) {
+        const w = id[0].toUpperCase();
+        if (['AND', 'OR', 'NOT', 'TRUE', 'FALSE', 'NULL', 'LIKE'].includes(w)) t.push({ type: 'kw', value: w });
+        else t.push({ type: 'id', value: id[0].toLowerCase() });
+        i += id[0].length; continue;
+      }
+      const op = /^(<=|>=|<>|!=|=|<|>|\(|\)|;|\|\||&&)/.exec(src.slice(i));
+      if (op) {
+        if (op[0] === ';') throw new SqlError('Mehrere SQL-Statements sind nicht erlaubt (Stacked Queries deaktiviert)');
+        const map = { '||': 'OR', '&&': 'AND' };
+        t.push(map[op[0]] ? { type: 'kw', value: map[op[0]] } : { type: 'op', value: op[0] });
+        i += op[0].length; continue;
+      }
+      throw new SqlError(`You have an error in your SQL syntax near '${src.slice(i, i + 20)}'`);
+    }
+    return t;
+  }
+
+  function parseWhere(tokens) {
+    let p = 0;
+    const peek = () => tokens[p];
+    const isKw = (w) => peek() && peek().type === 'kw' && peek().value === w;
+    const syntax = () => new SqlError(`You have an error in your SQL syntax near '${peek() ? (peek().value ?? '') : 'end of query'}'`);
+
+    function orExpr() {
+      let left = andExpr();
+      while (isKw('OR')) { p++; const l = left, r = andExpr(); left = (row) => (truthy(l(row)) || truthy(r(row)) ? 1 : 0); }
+      return left;
+    }
+    function andExpr() {
+      let left = notExpr();
+      while (isKw('AND')) { p++; const l = left, r = notExpr(); left = (row) => (truthy(l(row)) && truthy(r(row)) ? 1 : 0); }
+      return left;
+    }
+    function notExpr() {
+      if (isKw('NOT')) { p++; const e = notExpr(); return (row) => (truthy(e(row)) ? 0 : 1); }
+      return cmp();
+    }
+    function cmp() {
+      const left = primary();
+      const t = peek();
+      if (t && (t.type === 'op' && ['=', '!=', '<>', '<', '>', '<=', '>='].includes(t.value) || (t.type === 'kw' && t.value === 'LIKE'))) {
+        p++;
+        const right = primary();
+        const op = t.value;
+        return (row) => compare(left(row), right(row), op);
+      }
+      return left;
+    }
+    function primary() {
+      const t = peek();
+      if (!t) throw syntax();
+      if (t.type === 'op' && t.value === '(') {
+        p++;
+        const e = orExpr();
+        if (!peek() || peek().value !== ')') throw syntax();
+        p++;
+        return e;
+      }
+      p++;
+      if (t.type === 'str' || t.type === 'num') return () => t.value;
+      if (t.type === 'kw' && (t.value === 'TRUE' || t.value === 'FALSE')) return () => (t.value === 'TRUE' ? 1 : 0);
+      if (t.type === 'kw' && t.value === 'NULL') return () => null;
+      if (t.type === 'id') {
+        if (!['id', 'user', 'pass'].includes(t.value)) throw new SqlError(`Unknown column '${t.value}' in 'where clause'`);
+        return (row) => row[t.value];
+      }
+      p--;
+      throw syntax();
+    }
+
+    const expr = orExpr();
+    if (p < tokens.length) throw syntax();
+    return expr;
+  }
+
+  const toNum = (v) => (typeof v === 'number' ? v : typeof v === 'boolean' ? +v : parseFloat(v) || 0);
+  function truthy(v) { return v !== null && toNum(v) !== 0; }
+  function compare(a, b, op) {
+    if (a === null || b === null) return 0;
+    let x = a, y = b;
+    if (typeof a === 'number' || typeof b === 'number') { x = toNum(a); y = toNum(b); }
+    else { x = String(a).toLowerCase(); y = String(b).toLowerCase(); }   // MySQL: Vergleich ohne Groß/Klein
+    if (op === 'LIKE') {
+      const re = new RegExp('^' + String(b).toLowerCase().replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/%/g, '.*').replace(/_/g, '.') + '$');
+      return re.test(String(a).toLowerCase()) ? 1 : 0;
+    }
+    switch (op) {
+      case '=': return x === y ? 1 : 0;
+      case '!=': case '<>': return x !== y ? 1 : 0;
+      case '<': return x < y ? 1 : 0;
+      case '>': return x > y ? 1 : 0;
+      case '<=': return x <= y ? 1 : 0;
+      case '>=': return x >= y ? 1 : 0;
+    }
+    return 0;
+  }
+
+  async function level4(user, pass) {
+    const where = `user = '${user}' AND pass = '${pass}'`;
+    log(4, `SQL> SELECT * FROM users WHERE ${where}`, 'info');
+    let rows;
+    try {
+      const expr = parseWhere(tokenize(where));
+      rows = USERS.filter((r) => truthy(expr(r)));
+    } catch (e) {
+      if (e instanceof SqlError) return log(4, `ERROR 1064: ${e.message}`, 'err');
+      throw e;
+    }
+    log(4, `${rows.length} Zeile(n) gefunden`, 'dim');
+    if (!rows.length) return log(4, '401 Unauthorized – Benutzer oder Passwort falsch', 'err');
+    const who = rows[0].user;
+    if (who === 'admin') {
+      log(4, '200 OK – Willkommen, admin.', 'ok');
+      return solve(4, 'admin');
+    }
+    log(4, `200 OK – Eingeloggt als „${who}“. Das ist nicht der Admin.`, 'err');
+  }
+
+  // ---------- Level 5: ungesalzener SHA-1 ----------
+  const L5 = { admin: '327156ab287c6aa52c8670e13163fc1bf660add4', kowalski: '5627901a8bb14d1a606ad3ae51c72de87d2c79d1', gast: '0e110f6bafda86368db93664dfc5cdc3c05471ac' };
+  async function level5(user, pass) {
+    log(5, `POST /login  user=${user}`);
+    const h = await hash('SHA-1', pass);
+    if (L5[user] && L5[user] === h) {
+      if (user === 'admin') {
+        log(5, '200 OK – Willkommen, admin.', 'ok');
+        return solve(5, pass);
+      }
+      return log(5, `200 OK – Eingeloggt als „${user}“. Gesucht ist aber der Admin.`, 'err');
+    }
+    log(5, '401 Unauthorized – Benutzer oder Passwort falsch', 'err');
+  }
+
+  // ---------- Finale ----------
+  function renderFinale() {
+    const all = LEVELS.every(({ n }) => state.solved[n]);
+    if (!all) { show(1); return; }
+    const mins = Math.max(1, Math.round((state.end - state.start) / 60000));
+    const hints = Object.values(state.hints).reduce((a, b) => a + b, 0);
+    $('#finale-text').textContent = `Alle 5 Level geknackt in ${mins} Minute${mins === 1 ? '' : 'n'} mit ${hints} Tipp${hints === 1 ? '' : 's'}. `
+      + (hints === 0 ? 'Ganz ohne Hilfe. Respekt, Profi!' : 'Starke Leistung!');
+    $('#flags-list').innerHTML = LEVELS.map(({ n, label }) => `<li>${n} · ${esc(label)}: ${esc(state.solved[n].flag)}</li>`).join('');
+  }
+
+  // ---------- Verdrahtung ----------
+  const HANDLERS = { 1: level1, 2: level2, 3: level3, 4: level4, 5: level5 };
+  $$('form.login').forEach((form) => {
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const n = +form.dataset.form;
+      const user = form.user.value.trim();
+      const pass = form.pass.value;
+      if (!hasSubtle) return log(n, 'Dein Browser unterstützt Web Crypto hier nicht (nur über https).', 'err');
+      await HANDLERS[n](user, pass);
+    });
+  });
+  $('[data-admin-btn]').addEventListener('click', openAdmin);
+  $$('[data-hint-btn]').forEach((b) => b.addEventListener('click', () => {
+    const n = +b.dataset.hintBtn;
+    state.hints[n] = Math.min(HINTS[n].length, (state.hints[n] || 0) + 1);
+    save();
+    renderHints(n);
+  }));
+  $('#reset').addEventListener('click', () => {
+    state = { solved: {}, start: Date.now(), end: null, hints: {} };
+    save();
+    document.cookie = `${COOKIE}=; Max-Age=0`;
+    $$('.term').forEach((t) => { t.textContent = ''; });
+    show(1);
+  });
+
+  // Start: Level aus der URL (#level3) oder das erste ungelöste
+  const fromHash = /^#level([1-5])$/.exec(location.hash);
+  const firstOpen = LEVELS.find(({ n }) => !state.solved[n]);
+  if (location.hash === '#finale' && !firstOpen) show('finale');
+  else if (fromHash && unlocked(+fromHash[1])) show(+fromHash[1]);
+  else show(firstOpen ? firstOpen.n : 'finale');
+})();
+</script>
+</body>
+</html>
