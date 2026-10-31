@@ -443,7 +443,7 @@ const state = {
 const easeInOut = (t) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
 const easeOut = (t) => 1 - Math.pow(1 - t, 3);
 
-function flyTo({ pos, target, duration, arc = 0, onDone }) {
+function flyTo({ pos, target, duration, arc = 0, onDone, toOverview = false }) {
   controls.enabled = false;
   controls.autoRotate = false;
   state.mode = state.mode === 'intro' ? 'intro' : 'flying';
@@ -452,7 +452,7 @@ function flyTo({ pos, target, duration, arc = 0, onDone }) {
     duration: REDUCED_MOTION ? Math.min(duration, 0.5) : duration,
     fromPos: camera.position.clone(),
     fromTarget: controls.target.clone(),
-    pos, target, arc, onDone,
+    pos, target, arc, onDone, toOverview,
   };
 }
 
@@ -517,6 +517,7 @@ function overview(duration = 2.0) {
     pos: () => overviewPose(az),
     target: () => new THREE.Vector3(0, 0, 0),
     duration,
+    toOverview: true,
     onDone: () => {
       state.mode = 'overview';
       setOverviewLimits();
@@ -531,16 +532,22 @@ function hashId() { return decodeURIComponent(location.hash.slice(1)).toLowerCas
 function route(id) {
   const body = byId.get(id);
   if (body) { if (state.focus !== body) focus(body); }
-  else if (state.focus || state.mode === 'flying') overview();
+  else if (state.focus || (state.mode === 'flying' && !state.fly?.toOverview)) overview();
 }
 function go(id) {
   const current = state.focus?.cfg.id ?? null;
   if (id === current) return;
-  const url = id ? '#' + id : location.pathname + location.search;
-  history.pushState(null, '', url);
+  try {
+    history.pushState(null, '', id ? '#' + id : location.pathname + location.search);
+  } catch {
+    // z. B. in abgesicherten iframes: dann über den Hash navigieren (löst hashchange aus)
+    location.hash = id || '';
+    return;
+  }
   route(id);
 }
 window.addEventListener('popstate', () => route(hashId()));
+window.addEventListener('hashchange', () => route(hashId()));
 
 // --- Eingaben -----------------------------------------------------------------
 const raycaster = new THREE.Raycaster();
@@ -681,7 +688,6 @@ setOverviewLimits();
 
 const initial = byId.get(hashId());
 if (initial) {
-  history.replaceState(null, '', '#' + initial.cfg.id);
   state.mode = 'overview';
   focus(initial);
 } else {
