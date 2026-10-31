@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>www.3mmooo.de</title>
+    <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
+    <script src="https://unpkg.com/aframe-extras/dist/aframe-extras.min.js"></script>
+    <script src="3dmmooo copy.js"></script>
+    <script src="nip.js"></script>
+    </head>
+<body>
+    <a-scene>
+        <!-- Lichtquelle -->
+        <a-light type="directional" position="-1 1 1" intensity="1" castShadow="true"></a-light>
+        
+
+        <!-- Kamera mit Blicksteuerung und Cursor -->
+    <a-entity position="0 15 495" camera look-controls>
+           
+           <a-entity cursor="fuse: false; fuseTimeout: 500"
+                      position="0 0 -1"
+                      geometry="primitive: sphere; radius: 0.01;"
+                      material="color: yellow; shader: flat">
+            </a-entity>
+            <a-box id="homeButton" class="clickable menu-item" data-target="#home"></a-box> 
+        </a-entity>
+        
+
+        <!-- Willkommensbanner -->
+        <a-box position="0 08 -10" rotation="0 0 0" color="white" width="10" height="2.5" depth="2" 
+            class="clickable menu-item" shadow 
+            data-target="#WelcomeSection"       
+            animation__mouseenter="property: scale; to: 1.3 1.3 1.3; startEvents: mouseenter; dur: 200"
+            animation__mouseleave="property: scale; to: 1 1 1; startEvents: mouseleave; dur: 200"
+            animation="property: rotation; to: 360 360 360; loop: true; dur: 7500">
+     <a-text value="3mmooo.de" color="#8A2BE2" position="-2.8 0 1" scale="4.6 5 4" font=""></a-text>
+     <a-text value="3mmooo.de" color="#8A2BE2" position="3 0 -1.2" scale="4.6 5 4" rotation="0 180 0" font=""></a-text>
+     <!--<a-text value="3mmooo.de" color="#8A2BE2" position="-4 1.25 0" scale="4.6 5 4" rotation="0 90 0"></a-text>
+     <a-text value="3mmooo.de" color="#8A2BE2" position="-2.8 1.25 1" scale="4.6 5 4" rotation="0 -90 0"></a-text>
+     -->
+
+    </a-box>
+
+ </a-box>
+ 
+
+    <a-box position="1 -350 100" rotation="0 0 0" color="#8A2BE2" width="10" height="3" depth="2" 
+                class="clickable menu-item" shadow 
+                data-target="#home"      
+                animation__mouseenter="property: scale; to: 1.3 1.3 1.3; startEvents: mouseenter; dur: 200"
+                animation__mouseleave="property: scale; to: 1 1 1; startEvents: mouseleave; dur: 200">
+        <a-text value="Home" color="black" position="-1.5 0 1" scale="5 5 4" font=""></a-text>
+    </a-box>
+
+    <a-box position="0 15 480" rotation="0 0 0" color="#8A2BE2" width="5" height="3" depth="2" 
+                class="clickable menu-item"
+                data-target="#home"    
+                animation__mouseenter="property: scale; to: 1.3 1.3 1.3; startEvents: mouseenter; dur: 200"
+                animation__mouseleave="property: scale; to: 1 1 1; startEvents: mouseleave; dur: 200">
+        <a-text value="Home" color="black" position="-1.9 0 1" scale="6 6 6" font=""></a-text>
+    </a-box>
+
+    <a-box position="-5 1 -8" rotation="0 0 0" color="#8A2BE2" width="4" height="2" depth="2"
+   class="clickable menu-item" shadow
+   data-target="#aboutMeSection"
+   animation__mouseenter="property: scale; to: 1.3 1.3 1.3; startEvents: mouseenter; dur: 200"
+   animation__mouseleave="property: scale; to: 1 1 1; startEvents: mouseleave; dur: 200"
+   tooltip="text: IT-Tools: Powershell-Skripte, Python-Programme, Netzwerk-Management.">
+    <a-text value="Download" color="black" position="-1.5 0 1" scale="3 3 3"></a-text>
+</a-box>
+
+
+
+        <a-box position="0 1 -8" rotation="0 0 0" color="#8A2BE2" width="4" height="2" depth="2" 
+            class="clickable menu-item" shadow 
+            data-target="#MiddelSection"
+            animation__mouseenter="property: scale; to: 1.3 1.3 1.3; startEvents: mouseenter; dur: 200"
+            animation__mouseleave="property: scale; to: 1 1 1; startEvents: mouseleave; dur: 200">
+        <a-text value="About Me" color="black" position="-1.5 0 1" scale="3 3 3" font=""></a-text>
+    </a-box>
+
+        <a-box position="5 1 -8" rotation="0 0 0" color="#8A2BE2" width="4" height="2" depth="2" class="menu-item clickable" shadow 
+            data-target="#gamesSection"
+            animation__mouseenter="property: scale; to: 1.3 1.3 1.3; startEvents: mouseenter; dur: 200"
+            animation__mouseleave="property: scale; to: 1 1 1; startEvents: mouseleave; dur: 200">
+        <a-text value="Games" color="black" position="-1.6 0 1" scale="4 3 3" font=""></a-text>
+    </a-box>
+    
+         
+        <a-box position="-4 4 -8" rotation="0 0 0" color="#8A2BE2" width="7" height="2" depth="2" class="menu-item" shadow 
+            data-target="#ProjekteSection"
+            animation__mouseenter="property: scale; to: 1.3 1.3 1.3; startEvents: mouseenter; dur: 200"
+            animation__mouseleave="property: scale; to: 1 1 1; startEvents: mouseleave; dur: 200"
+            shadow>
+        <a-text value="Blue Teaming" color="black" position="-2.6 0 1" scale="4 4 4" font=""></a-text>
+    </a-box>
+
+    <a-box position="-20 65 -80" rotation="0 0 0" color="#8A2BE2" width="4" height="2" depth="2" 
+            class="clickable animation menu-item" shadow data-target="#home" 
+            animation__mouseenter="property: scale; to: 1.3 1.3 1.3; startEvents: mouseenter; dur: 200"
+            animation__mouseleave="property: scale; to: 1 1 1; startEvents: mouseleave; dur: 200"
+            shadow>
+        <a-text value="Home" color="black" position="-1.4 0 1" scale="4 4 4" font=""></a-text>
+    </a-box>
+
+    <a-box position="-14 60 -80" rotation="0 0 0" color="#8A2BE2" width="6" height="2" depth="2" 
+    link-on-click="url: https://urlxray.com" class="clickable"
+    animation__mouseenter="property: scale; to: 1.3 1.3 1.3; startEvents: mouseenter; dur: 200"
+    animation__mouseleave="property: scale; to: 1 1 1; startEvents: mouseleave; dur: 200"
+    shadow data-target="#ProjekteSection"
+    tooltip="text: Überprüft und enttarnt verkürzte URLs, um Sicherheit zu gewährleisten.">
+ <a-text value="URL-Checker" color="black" position="-1.7 0 1" scale="3 3 3"></a-text>
+</a-box>
+
+<a-box position="-26 60 -80" rotation="0 0 0" color="#8A2BE2" width="6" height="2" depth="2" 
+       link-on-click="url: https://www.virustotal.com/gui/home/upload" class="clickable"
+       animation__mouseenter="property: scale; to: 1.3 1.3 1.3; startEvents: mouseenter; dur: 200"
+       animation__mouseleave="property: scale; to: 1 1 1; startEvents: mouseleave; dur: 200"
+       shadow custom-tooltip="text: Lade Dateien hoch, um sie auf Viren zu prüfen; positionOffset: 0 0.5 0">
+    <a-text value="VirusTotal" color="black" position="-1.7 0 1" scale="3 3 3"></a-text>
+</a-box>
+
+
+<a-box position="-20 70 -80" rotation="0 0 0" color="#8A2BE2" width="8" height="2" depth="2" 
+       link-on-click="url: https://haveibeenpwned.com" class="clickable"
+       animation__mouseenter="property: scale; to: 1.3 1.3 1.3; startEvents: mouseenter; dur: 200"
+       animation__mouseleave="property: scale; to: 1 1 1; startEvents: mouseleave; dur: 200"
+       shadow
+       tooltip="text: Überprüfe, ob deine Daten in Datenverletzungen aufgetaucht sind.">
+    <a-text value="Have I Been Pwned?" color="black" position="-3 0 1" scale="3 3 3"></a-text>
+</a-box>
+
+
+<!-- Box für Rapid7 Datenbank -->
+<a-box position="-26 65 -80" rotation="0 0 0" color="#8A2BE2" width="4" height="2" depth="2" 
+       link-on-click="url: https://www.rapid7.com/db/" class="clickable"
+       animation__mouseenter="property: scale; to: 1.3 1.3 1.3; startEvents: mouseenter; dur: 200"
+       animation__mouseleave="property: scale; to: 1 1 1; startEvents: mouseleave; dur: 200"
+       shadow tooltip="text: Zugriff auf Rapid7 Vulnerability & Exploit Datenbank.">
+    <a-text value="Rapid7 DB" color="black" position="-1.5 0 1" scale="3 3 3"></a-text>
+</a-box>
+
+<!-- Box für Exploit-DB -->
+<a-box position="-14 65 -80" rotation="0 0 0" color="#8A2BE2" width="4" height="2" depth="2" 
+       link-on-click="url: https://www.exploit-db.com/" class="clickable"
+       animation__mouseenter="property: scale; to: 1.3 1.3 1.3; startEvents: mouseenter; dur: 200"
+       animation__mouseleave="property: scale; to: 1 1 1; startEvents: mouseleave; dur: 200"
+       shadow tooltip="text: Durchsuche die Exploit-Datenbank für Sicherheitslücken.">
+    <a-text value="Exploit DB" color="black" position="-1.7 0 1" scale="3 3 3"></a-text>
+</a-box>
+
+
+
+    </a-box>
+  
+        <a-box position="4 4 -8" rotation="0 0 0" color="#8A2BE2" width="7" height="2" depth="2" class="menu-item"
+              animation__mouseenter="property: scale; to: 1.3 1.3 1.3; startEvents: mouseenter; dur: 200"
+              animation__mouseleave="property: scale; to: 1 1 1; startEvents: mouseleave; dur: 200"
+              data-target="#AsciiSection" shadow>
+        <a-text value="Red Teaming" color="black" position="-2.5 0 1" scale="4 4 4" font=""></a-text>
+    </a-box>
+
+        <a-box position="20 65 -80" rotation="0 0 0" color="#8A2BE2" width="4" height="2" depth="2" 
+            animation__mouseenter="property: scale; to: 1.3 1.3 1.3; startEvents: mouseenter; dur: 200"
+            animation__mouseleave="property: scale; to: 1 1 1; startEvents: mouseleave; dur: 200"
+            class="clickable menu-item" shadow data-target="#home" >
+        <a-text value="Home" color="black" position="-1.4 0 1" scale="4 4 4" font=""></a-text>
+    </a-box>
+
+        <a-box position="20 60 -80" rotation="0 0 0" color="#8A2BE2" width="4" height="2" depth="2" 
+            class="clickable menu-item" link-on-click="url: https://ascii-generator.site/"
+            animation__mouseenter="property: scale; to: 1.3 1.3 1.3; startEvents: mouseenter; dur: 200"
+            animation__mouseleave="property: scale; to: 1 1 1; startEvents: mouseleave; dur: 200"
+            shadow>
+        <a-text value="Ascii" color="black" position="-1.0 0 1" scale="4 4 4" font=""></a-text>
+    </a-box>
+
+    <a-box position="10 60 -80" rotation="0 0 0" color="#8A2BE2" width="6" height="2" depth="2" 
+       class="clickable menu-item" link-on-click="url: https://www.kali.org/"
+       animation__mouseenter="property: scale; to: 1.3 1.3 1.3; startEvents: mouseenter; dur: 200"
+       animation__mouseleave="property: scale; to: 1 1 1; startEvents: mouseleave; dur: 200"
+       shadow>
+    <a-text value="Kali Linux" color="black" position="-2 0 1" scale="4 4 4"></a-text>
+</a-box>
+
+    <a-box position="20 70 -80" rotation="0 0 0" color="#8A2BE2" width="7" height="2" depth="2" 
+    class="clickable menu-item" link-on-click="url: https://revshells.com/"
+    animation__mouseenter="property: scale; to: 1.3 1.3 1.3; startEvents: mouseenter; dur: 200"
+    animation__mouseleave="property: scale; to: 1 1 1; startEvents: mouseleave; dur: 200"
+    shadow>
+ <a-text value="Reverse Shells" color="black" position="-3 0 1" scale="4 4 4"></a-text>
+</a-box>
+
+
+
+
+        <a-box position="-80 5 -100" rotation="0 0 0" color="#8A2BE2" width="4" height="2" depth="2"
+                class="clickable menu-item" shadow 
+                link-on-click="url: Nip.html"
+                animation__mouseenter="property: scale; to: 1.3 1.3 1.3; startEvents: mouseenter; dur: 200"
+                animation__mouseleave="property: scale; to: 1 1 1; startEvents: mouseleave; dur: 200">
+        <a-text value="NetTools" color="black" position="-1.3 0 1" scale="3 4 4" font=""></a-text>
+    </a-box>
+
+        <a-box position="-80 10 -100" rotation="0 0 0" color="#8A2BE2" width="4" height="2" depth="2"
+            class="clickable menu-item" shadow data-target="#home" 
+            animation__mouseenter="property: scale; to: 1.3 1.3 1.3; startEvents: mouseenter; dur: 200"
+            animation__mouseleave="property: scale; to: 1 1 1; startEvents: mouseleave; dur: 200">
+            <a-text value="Home" color="black" position="-1.4 0 1" scale="4 4 4" font=""></a-text>
+    </a-box>
+
+
+        <a-box position="80 10 -100" rotation="0 0 0" color="#8A2BE2" width="4" height="2" depth="2"
+            class="clickable menu-item" shadow data-target="#home" 
+            animation__mouseenter="property: scale; to: 1.3 1.3 1.3; startEvents: mouseenter; dur: 200"
+            animation__mouseleave="property: scale; to: 1 1 1; startEvents: mouseleave; dur: 200">
+        <a-text value="Home" color="black" position="-1.4 0 1" scale="4 4 4" font=""></a-text>
+    </a-box>
+
+        <a-box position="80 5 -100" rotation="0 0 0" color="#8A2BE2" width="4" height="2" depth="2"
+            class="clickable menu-item" shadow
+            link-on-click="url:snake copy.html"
+            animation__mouseenter="property: scale; to: 1.3 1.3 1.3; startEvents: mouseenter; dur: 200"
+            animation__mouseleave="property: scale; to: 1 1 1; startEvents: mouseleave; dur: 200">
+        <a-text value="Snake" color="black" position="-1.4 0 1" scale="4 4 4" font=""></a-text>
+    </a-box>
+
+    <a-box position="1 10 -100" rotation="0 0 0" color="#8A2BE2" width="4" height="2" depth="2"
+            class="clickable menu-item" shadow data-target="#home" 
+            animation__mouseenter="property: scale; to: 1.3 1.3 1.3; startEvents: mouseenter; dur: 200"
+            animation__mouseleave="property: scale; to: 1 1 1; startEvents: mouseleave; dur: 200">
+        <a-text value="Home" color="black" position="-1.4 0 1" scale="4 4 4" font=""></a-text>
+    </a-box>
+
+        <a-box position="1 5 -100" rotation="0 0 0" color="#8A2BE2" width="4" height="2" depth="2"
+            class="clickable menu-item" shadow
+            link-on-click="url: https://linkedin.com/in/emrah-yamak"
+            animation__mouseenter="property: scale; to: 1.3 1.3 1.3; startEvents: mouseenter; dur: 200"
+            animation__mouseleave="property: scale; to: 1 1 1; startEvents: mouseleave; dur: 200">
+        <a-text value="About Me" color="black" position="-1.4 0 1" scale="3 4 4" font=""></a-text>
+    </a-box>
+
+    <!-- Standard-Hintergrund -->
+<a-sky id="aktuellSky" src="supermoon_night-wallpaper-7680x4800.jpg"></a-sky>
+
+<!-- Spezifische Hintergründe für jede Sektion -->
+<a-sky id="aboutMeSky" src="earth-5454439.jpg" material="opacity: 0;"></a-sky>
+<a-sky id="gamesSky" src="saturn-6298099.png" material="opacity: 0;"></a-sky>
+<a-sky id="middleSky" src="ai-generated-8577246.jpg" material="opacity: 0;"></a-sky>
+<a-sky id="projekteSky" src="jupiter-7266014.png" material="opacity: 0;"></a-sky>
+<a-sky id="asciiSky" src="planet-5923800.jpg" material="opacity: 0;"></a-sky>
+<a-sky id="welcomeSky" src="supermoon_night-wallpaper-7680x4800.jpg" material="opacity: 0;"></a-sky>
+<a-sky id="impressumSky" src="jupiter-7266014.png" material="opacity: 0;"></a-sky>
+
+<!-- Der Hintergrund für neuSky -->
+<a-sky id="neuSky" src="earth-5454439.jpg" material="opacity: 0;"></a-sky>
+
+    
+
+
+        </a-scene>
+</body>
+</html>
