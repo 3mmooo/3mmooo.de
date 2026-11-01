@@ -192,6 +192,33 @@
 
   footer { color: var(--muted); font-size: 13px; line-height: 1.6; max-width: 70ch; }
   [hidden] { display: none !important; }
+
+  /* Werkzeugkasten */
+  .toolbox { gap: 14px; }
+  .toolbox h2 { margin: -8px 0 0; font-size: 22px; }
+  .toolbox .sub { margin: 0; color: var(--muted); font-size: 14.5px; line-height: 1.5; }
+  .tabs { display: flex; flex-wrap: wrap; gap: 6px; }
+  .tab {
+    padding: 8px 14px; border-radius: 999px; border: 1px solid var(--line);
+    background: rgba(255, 255, 255, 0.04); font-size: 13.5px; font-weight: 600; cursor: pointer;
+  }
+  .tab[aria-selected="true"] { background: var(--mars-dim); border-color: var(--mars); }
+  .tab:focus-visible { outline: 2px solid var(--mars); outline-offset: 2px; }
+  .tool { display: flex; flex-direction: column; gap: 10px; }
+  .tool p { margin: 0; font-size: 14px; color: var(--muted); line-height: 1.5; }
+  textarea {
+    font: 14px/1.5 var(--mono); color: var(--text);
+    padding: 10px 12px; border-radius: 10px; border: 1px solid var(--line);
+    background: rgba(255, 255, 255, 0.06); outline: none; resize: vertical; min-height: 70px; width: 100%;
+  }
+  textarea:focus { border-color: var(--mars); }
+  .out { margin: 0; padding: 10px 12px; border-radius: 10px; background: #050608; border: 1px solid var(--line); font: 13.5px/1.5 var(--mono); white-space: pre-wrap; overflow-wrap: anywhere; min-height: 42px; }
+  .source { max-height: 360px; overflow: auto; white-space: pre; word-break: normal; font-size: 12px; }
+  .source mark { background: rgba(255, 107, 74, 0.45); color: #fff; border-radius: 3px; }
+  .cookie-row { display: grid; grid-template-columns: minmax(0, 140px) minmax(0, 1fr); gap: 8px; align-items: center; }
+  .cookie-row code { font: 13px var(--mono); overflow: hidden; text-overflow: ellipsis; }
+  .tool .ok { color: var(--ok); }
+  .tool .err { color: var(--err); }
 </style>
 </head>
 <body>
@@ -204,7 +231,7 @@
   <header>
     <h1>Hack the <span>Mars Base</span></h1>
     <p>Die Forschungsstation auf dem Mars hat ein Login-System. Leider wurde es unter Zeitdruck gebaut.
-       Finde in jedem Level einen Weg hinein und sammle alle 5 Flags. Entwicklertools (F12) sind ausdrücklich erlaubt.</p>
+       Finde in jedem Level einen Weg hinein und sammle alle 5 Flags. Entwicklertools (F12) sind erlaubt, alternativ gibt es unten einen Werkzeugkasten.</p>
   </header>
 
   <nav class="progress" id="progress" aria-label="Level"></nav>
@@ -342,6 +369,56 @@
     </div>
   </section>
 
+  <!-- ===================================================== WERKZEUGKASTEN -->
+  <section class="level toolbox" id="toolbox">
+    <p class="eyebrow">Ausrüstung</p>
+    <h2>Werkzeugkasten</h2>
+    <p class="sub">Profis nehmen die Entwicklertools (F12). Wer keine Konsole hat, zum Beispiel am Handy,
+      findet hier dieselben Werkzeuge. Welches du wann brauchst, musst du selbst herausfinden.</p>
+    <div class="tabs" role="tablist">
+      <button class="tab" role="tab" data-tool="source" aria-selected="true">Quelltext</button>
+      <button class="tab" role="tab" data-tool="b64" aria-selected="false">Base64</button>
+      <button class="tab" role="tab" data-tool="cookies" aria-selected="false">Cookie-Editor</button>
+      <button class="tab" role="tab" data-tool="hash" aria-selected="false">Hash-Cracker</button>
+    </div>
+
+    <div class="tool" data-panel="source">
+      <p>Zeigt den Quelltext dieser Seite, so wie ihn der Server ausgeliefert hat (wie <code>Strg+U</code>).</p>
+      <div class="row">
+        <button class="btn" id="src-load">Quelltext laden</button>
+        <input id="src-find" placeholder="Suchen …" spellcheck="false" style="flex:1;min-width:140px">
+      </div>
+      <pre class="out source" id="src-out" hidden></pre>
+    </div>
+
+    <div class="tool" data-panel="b64" hidden>
+      <p>Base64 kodieren und dekodieren.</p>
+      <textarea id="b64-in" spellcheck="false" placeholder="Text oder Base64 eingeben"></textarea>
+      <div class="row">
+        <button class="btn" id="b64-enc">Kodieren →</button>
+        <button class="btn" id="b64-dec">← Dekodieren</button>
+      </div>
+      <pre class="out" id="b64-out"></pre>
+    </div>
+
+    <div class="tool" data-panel="cookies" hidden>
+      <p>Zeigt die Cookies dieser Seite. Werte lassen sich ändern und speichern.</p>
+      <div id="cookie-list" class="tool"></div>
+      <div class="row">
+        <button class="btn" id="cookie-refresh">Neu laden</button>
+        <button class="btn primary" id="cookie-save">Speichern</button>
+      </div>
+      <p id="cookie-msg"></p>
+    </div>
+
+    <div class="tool" data-panel="hash" hidden>
+      <p>Wörterbuch-Angriff: Hash einfügen. Das Tool hasht jedes Wort aus einer Liste häufiger Passwörter und vergleicht.</p>
+      <input id="hash-in" placeholder="Hash (SHA-1 oder SHA-256)" spellcheck="false">
+      <div class="row"><button class="btn" id="hash-go">Knacken</button></div>
+      <pre class="out" id="hash-out"></pre>
+    </div>
+  </section>
+
   <footer>
     Alles auf dieser Seite läuft nur in deinem Browser. Es gibt keinen echten Server, und kein echtes System wird angegriffen.
     Die Level zeigen typische Schwachstellen zum Lernen. Teste solche Techniken in der echten Welt nur an Systemen,
@@ -374,18 +451,18 @@
   const HINTS = {
     1: [
       'Was der Browser anzeigt, ist nicht alles, was er vom Server bekommen hat.',
-      'Rechtsklick → <b>Seitenquelltext anzeigen</b> (oder <code>Strg+U</code>) und nach Level 1 suchen.',
+      'Rechtsklick → <b>Seitenquelltext anzeigen</b> (<code>Strg+U</code>) oder unten im Werkzeugkasten <b>Quelltext</b> laden.',
       'Entwickler hinterlassen gerne <code>&lt;!-- Kommentare --&gt;</code> mit „TODO“.',
     ],
     2: [
       'Wenn der Browser das Passwort prüft, muss der Browser es auch irgendwie kennen.',
-      'Öffne die Entwicklertools (F12) und suche im Quelltext nach <code>checkLogin</code>.',
-      '<code>btoa()</code> ist Base64. Das ist keine Verschlüsselung, sondern nur eine Kodierung. <code>atob()</code> macht es rückgängig.',
+      'Such im Quelltext nach <code>checkLogin</code> (F12 oder Werkzeugkasten → Quelltext).',
+      '<code>btoa()</code> ist Base64. Das ist keine Verschlüsselung, sondern nur eine Kodierung. Der Werkzeugkasten kann sie rückgängig machen.',
     ],
     3: [
       'Melde dich zuerst als Gast an und schau, was sich dabei im Browser ändert.',
-      'F12 → <b>Application</b> (Chrome) bzw. <b>Speicher</b> (Firefox) → Cookies. Der Wert von <code>mars_session</code> sieht aus wie Base64.',
-      'Dekodieren, <code>"role"</code> ändern, wieder kodieren und zurückschreiben, z. B. in der Konsole: <code>document.cookie = "mars_session=..."</code>',
+      'Schau dir die Cookies an (F12 → Application/Speicher, oder Werkzeugkasten → <b>Cookie-Editor</b>). Der Wert von <code>mars_session</code> sieht aus wie Base64.',
+      'Wert dekodieren (Base64), <code>"role"</code> auf <code>admin</code> ändern, wieder kodieren, im Cookie-Editor speichern und die Admin-Konsole öffnen.',
     ],
     4: [
       'Schau dir die SQL-Abfrage im Log genau an. Was passiert mit deinen Eingaben?',
@@ -394,7 +471,7 @@
     ],
     5: [
       'SHA-1 ohne „Salt“: Gleiche Passwörter ergeben immer gleiche Hashes. Dafür gibt es riesige vorberechnete Tabellen.',
-      'Probier den Hash bei einem Hash-Lookup-Dienst wie CrackStation oder mit <code>hashcat -m 100</code> und der Wortliste <code>rockyou.txt</code>.',
+      'Ein Wörterbuch-Angriff hilft: der Hash-Cracker im Werkzeugkasten, CrackStation oder <code>hashcat -m 100</code> mit <code>rockyou.txt</code>.',
       'Das Passwort ist ein sehr bekannter Weltraum-Filmtitel, klein geschrieben und ohne Leerzeichen.',
     ],
   };
@@ -483,7 +560,7 @@
   function show(n) {
     if (n !== 'finale' && !unlocked(n)) return;
     current = n === 'finale' ? 6 : n;
-    $$('section.level').forEach((s) => { s.hidden = true; });
+    $$('section[data-level], #finale').forEach((s) => { s.hidden = true; });
     if (n === 'finale') {
       renderFinale();
       $('#finale').hidden = false;
@@ -757,6 +834,93 @@
       + (hints === 0 ? 'Ganz ohne Hilfe. Respekt, Profi!' : 'Starke Leistung!');
     $('#flags-list').innerHTML = LEVELS.map(({ n, label }) => `<li>${n} · ${esc(label)}: ${esc(state.solved[n].flag)}</li>`).join('');
   }
+
+  // ---------- Werkzeugkasten ----------
+  $$('.tab').forEach((t) => t.addEventListener('click', () => {
+    $$('.tab').forEach((x) => x.setAttribute('aria-selected', String(x === t)));
+    $$('[data-panel]').forEach((p) => { p.hidden = p.dataset.panel !== t.dataset.tool; });
+    if (t.dataset.tool === 'cookies') renderCookies();
+  }));
+
+  // Quelltext
+  let sourceText = '';
+  function renderSource() {
+    const q = $('#src-find').value.trim();
+    const out = $('#src-out');
+    if (!q) { out.textContent = sourceText; return; }
+    out.innerHTML = esc(sourceText).replace(new RegExp(esc(q).replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi'), (m) => `<mark>${m}</mark>`);
+    out.querySelector('mark')?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+  }
+  $('#src-load').addEventListener('click', async () => {
+    const out = $('#src-out');
+    out.hidden = false;
+    out.textContent = 'Lade …';
+    try {
+      sourceText = await (await fetch(location.href.split('#')[0], { cache: 'no-store' })).text();
+    } catch {
+      sourceText = document.documentElement.outerHTML;
+    }
+    renderSource();
+  });
+  $('#src-find').addEventListener('input', () => { if (sourceText) renderSource(); });
+
+  // Base64
+  const b64Out = (text, cls = '') => { const o = $('#b64-out'); o.textContent = text; o.className = 'out ' + cls; };
+  $('#b64-enc').addEventListener('click', () => {
+    try { b64Out(btoa(unescape(encodeURIComponent($('#b64-in').value)))); }
+    catch { b64Out('Kodieren fehlgeschlagen', 'err'); }
+  });
+  $('#b64-dec').addEventListener('click', () => {
+    try { b64Out(decodeURIComponent(escape(atob($('#b64-in').value.trim())))); }
+    catch { b64Out('Das ist kein gültiges Base64.', 'err'); }
+  });
+
+  // Cookie-Editor
+  function renderCookies() {
+    const list = $('#cookie-list');
+    const cookies = document.cookie.split(';').map((c) => c.trim()).filter(Boolean).map((c) => {
+      const i = c.indexOf('=');
+      return [c.slice(0, i), decodeURIComponent(c.slice(i + 1))];
+    });
+    $('#cookie-msg').textContent = '';
+    list.innerHTML = cookies.length
+      ? cookies.map(([k, v], i) => `<label class="cookie-row"><code title="${esc(k)}">${esc(k)}</code><input data-cookie="${esc(k)}" id="cookie-${i}" value="${esc(v)}" spellcheck="false"></label>`).join('')
+      : '<p>Noch keine Cookies vorhanden.</p>';
+  }
+  $('#cookie-refresh').addEventListener('click', renderCookies);
+  $('#cookie-save').addEventListener('click', () => {
+    const inputs = $$('[data-cookie]');
+    inputs.forEach((inp) => { document.cookie = `${inp.dataset.cookie}=${inp.value}; SameSite=Lax`; });
+    const msg = $('#cookie-msg');
+    msg.textContent = inputs.length ? 'Gespeichert.' : 'Nichts zu speichern.';
+    msg.className = inputs.length ? 'ok' : '';
+  });
+
+  // Hash-Cracker (Wörterbuch)
+  const WORDLIST = ('123456 password 123456789 12345678 12345 qwerty abc123 football 1234567 monkey 111111 letmein 1234 '
+    + '1234567890 dragon baseball sunshine iloveyou trustno1 princess 123123 welcome login admin qwerty123 solo 1q2w3e4r '
+    + 'master 666666 1qaz2wsx qwertyuiop ashley mustang 121212 starwars 654321 bailey access flower 555555 passw0rd shadow '
+    + 'lovely 7777777 michael password1 superman hello charlie 888888 freedom qazwsx ninja azerty loveme whatever batman '
+    + 'zaq1zaq1 000000 hallo hallo123 passwort passwort1 schatz geheim sommer fussball deutschland killer internet computer '
+    + 'gast guest test root toor mars rover apollo nasa galaxy startrek spaceman rocket orbit alien universe matrix '
+    + 'pokemon hunter2 summer2024 winter2024 changeme default secret').split(' ');
+  $('#hash-go').addEventListener('click', async () => {
+    const out = $('#hash-out');
+    const target = $('#hash-in').value.trim().toLowerCase();
+    const algo = target.length === 40 ? 'SHA-1' : target.length === 64 ? 'SHA-256' : null;
+    if (!algo) { out.className = 'out err'; out.textContent = 'Unbekanntes Format. Erwartet: SHA-1 (40 Zeichen) oder SHA-256 (64 Zeichen).'; return; }
+    out.className = 'out';
+    out.textContent = `${algo} erkannt. Teste ${WORDLIST.length} Wörter …`;
+    for (const [i, w] of WORDLIST.entries()) {
+      if (await hash(algo, w) === target) {
+        out.className = 'out ok';
+        out.textContent = `Treffer nach ${i + 1} Versuchen: ${w}`;
+        return;
+      }
+    }
+    out.className = 'out err';
+    out.textContent = `Kein Treffer in ${WORDLIST.length} Wörtern. Ein echtes Passwort ist hoffentlich nicht in so einer Liste.`;
+  });
 
   // ---------- Verdrahtung ----------
   const HANDLERS = { 1: level1, 2: level2, 3: level3, 4: level4, 5: level5 };
