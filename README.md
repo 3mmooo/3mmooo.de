@@ -7,13 +7,14 @@ Klick/Tipp auf einen Planeten zoomt heran und öffnet die Inhalte.
 | Himmelskörper | Bereich |
 |---|---|
 | Sonne | Willkommen / Übersicht |
+| Merkur | Referenzen (Kundenprojekte) |
+| Venus | Projekte (eigene Software) |
 | Erde | About Me |
 | Mars | Red Teaming |
 | Jupiter | Blue Teaming |
-| Saturn | Games (Snake) |
+| Saturn | Games (GameStation, Snake) |
 | Uranus | NetTools (Downloads) |
 | Neptun | Impressum & Datenschutz |
-| Merkur, Venus | nur Planeten-Infos |
 
 ## Features
 
@@ -56,6 +57,4 @@ Dann <http://localhost:8000> öffnen.
 
 ## TODO
 
-- Impressum in `js/content.js` (Neptun) mit echten Angaben füllen
-- Download-Links für die NetTools (Uranus) eintragen
-- About-Me-Text (Erde) nach Wunsch anpassen
+- Download-Links für SubCalculator, NiP-, DuD- und AD-Tool (Uranus) eintragen

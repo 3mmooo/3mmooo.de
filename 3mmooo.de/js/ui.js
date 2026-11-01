@@ -68,7 +68,7 @@ export function createUI({ order, onSelect, onBack }) {
   // --- Labels unter den Planeten ------------------------------------------
   function makeLabel(cfg) {
     const el = document.createElement('button');
-    el.className = 'label' + (cfg.section ? '' : ' minor');
+    el.className = 'label' + (cfg.section ? '' : ' minor') + (cfg.distance && cfg.distance < 20 ? ' inner' : '');
     el.style.setProperty('--accent', cfg.accent);
     el.innerHTML = `<span class="n">${esc(cfg.name)}</span>` +
       (cfg.section ? `<span class="s">${esc(cfg.section)}</span>` : '');
