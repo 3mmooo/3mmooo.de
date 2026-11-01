@@ -39,6 +39,31 @@ export function createUI({ order, onSelect, onBack }) {
   }
 
   $('#back').addEventListener('click', onBack);
+  $('#panel-close').addEventListener('click', onBack);
+
+  // Handy: Bottom-Sheet nach unten wischen zum Schließen
+  let swipe = null;
+  panel.addEventListener('touchstart', (e) => {
+    swipe = { y: e.touches[0].clientY, top: panelInner.scrollTop, fromGrip: !!e.target.closest('.grip') };
+  }, { passive: true });
+  panel.addEventListener('touchmove', (e) => {
+    if (!swipe) return;
+    const dy = e.touches[0].clientY - swipe.y;
+    if (dy > 0 && (swipe.top <= 0 || swipe.fromGrip)) {
+      panel.classList.add('dragging');
+      panel.style.setProperty('--drag', Math.min(dy, 300) + 'px');
+    }
+  }, { passive: true });
+  panel.addEventListener('touchend', () => {
+    const dy = parseFloat(panel.style.getPropertyValue('--drag')) || 0;
+    panel.style.removeProperty('--drag');
+    panel.classList.remove('dragging');
+    swipe = null;
+    if (dy > 90) onBack();
+  });
+
+  let resetHandler = () => {};
+  $('#recenter').addEventListener('click', () => resetHandler());
 
   // --- Labels unter den Planeten ------------------------------------------
   function makeLabel(cfg) {
@@ -58,9 +83,6 @@ export function createUI({ order, onSelect, onBack }) {
     const next = order[(i + 1) % order.length];
 
     let html = `
-      <button class="close" aria-label="Zurück zur Übersicht">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>
-      </button>
       <p class="eyebrow">${esc(cfg.name)}</p>
       <h2>${esc(cfg.section || cfg.name)}</h2>
       <div class="text">${cfg.text || ''}</div>`;
@@ -103,7 +125,6 @@ export function createUI({ order, onSelect, onBack }) {
     panelInner.innerHTML = html;
     panel.style.setProperty('--accent', cfg.accent);
     panelInner.scrollTop = 0;
-    panelInner.querySelector('.close').addEventListener('click', onBack);
     panelInner.querySelectorAll('[data-go]').forEach((b) => b.addEventListener('click', () => onSelect(b.dataset.go)));
   }
 
@@ -116,6 +137,8 @@ export function createUI({ order, onSelect, onBack }) {
 
   return {
     makeLabel,
+    onReset(fn) { resetHandler = fn; },
+    setOffCenter(on) { body.classList.toggle('off-center', on); },
     hideHint,
     showPanel(cfg) {
       renderPanel(cfg);
