@@ -148,7 +148,7 @@ export const PLANETS = [
       { title: 'Hack the Mars Base', desc: 'CTF-Challenge: knacke den Login in 5 Leveln', url: 'hack.html', internal: true, highlight: true },
       { title: 'Kali Linux', desc: 'Distribution für Penetrationstests', url: 'https://www.kali.org/' },
       { title: 'Reverse Shell Generator', desc: 'Reverse-Shell-Payloads für Pentests erzeugen', url: 'https://revshells.com/' },
-      { title: 'ASCII Generator', desc: 'Text in ASCII-Art umwandeln', url: 'https://ascii-generator.site/' },
+      { title: 'ASCII-Generator', desc: 'Text, Bilder und Kamera in ASCII-Art verwandeln – selbst gebaut', url: 'ascii.html', internal: true },
     ],
     facts: [
       ['Durchmesser', '6.779 km'],
@@ -389,7 +389,7 @@ export const EN = {
     text: `<p>The red planet – tools and resources for offensive security.</p>
       <p class="note">Only for authorised tests and learning.</p>`,
     links: ['CTF challenge: crack the login in 5 levels (German)', 'Distribution for penetration testing',
-      'Generate reverse-shell payloads for pentests', 'Turn text into ASCII art'],
+      'Generate reverse-shell payloads for pentests', 'Turn text, images and your camera into ASCII art – home-made (German)'],
     facts: [['Diameter', '6,779 km'], ['Distance to Sun', '227.9 million km'], ['Orbit', '687 days'], ['Day length', '24 h 37 min']],
   },
   jupiter: {

@@ -546,6 +546,9 @@
   }));
   $('#fs').addEventListener('input', () => out.style.setProperty('--fs', $('#fs').value + 'px'));
 
+  // Handy: kleinere Vorschau-Schrift, damit mehr aufs Display passt
+  if (innerWidth < 600) { $('#fs').value = 6; out.style.setProperty('--fs', '6px'); }
+
   // Start: Modus aus der URL (#text, #bild, #kamera)
   const start = location.hash.slice(1);
   if (document.fonts?.ready) document.fonts.ready.then(() => setMode(['text', 'bild', 'kamera'].includes(start) ? start : 'text'));
