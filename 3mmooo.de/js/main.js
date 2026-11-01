@@ -577,19 +577,30 @@ function pick(e) {
   return hit ? hit.object.userData.body : null;
 }
 
+// Tippen/Klicken (nicht Ziehen):
+//  - auf einen Planeten  -> hinfliegen
+//  - auf den Planeten, den man gerade anschaut, oder ins Leere -> zurück zur Übersicht
 let down = null;
+const activePointers = new Set();
 renderer.domElement.addEventListener('pointerdown', (e) => {
-  down = { x: e.clientX, y: e.clientY, t: performance.now() };
+  activePointers.add(e.pointerId);
+  if (activePointers.size > 1) { down = null; return; }      // zwei Finger = Zoomen/Verschieben
+  if (e.pointerType === 'mouse' && e.button !== 0) { down = null; return; }  // rechte Maustaste = Verschieben
+  down = { x: e.clientX, y: e.clientY, t: performance.now(), id: e.pointerId };
   ui.hideHint();
 });
+const releasePointer = (e) => activePointers.delete(e.pointerId);
+renderer.domElement.addEventListener('pointercancel', (e) => { releasePointer(e); down = null; });
 renderer.domElement.addEventListener('pointerup', (e) => {
-  if (!down) return;
+  releasePointer(e);
+  if (!down || down.id !== e.pointerId) return;
   const moved = Math.hypot(e.clientX - down.x, e.clientY - down.y);
   const quick = performance.now() - down.t < 500;
   down = null;
   if (moved > 8 || !quick) return;
   const body = pick(e);
-  if (body) go(body.cfg.id);
+  if (body && body !== state.focus) go(body.cfg.id);
+  else if (state.focus) go(null);
 });
 
 let hovered = null;
