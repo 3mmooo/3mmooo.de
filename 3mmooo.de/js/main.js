@@ -18,6 +18,7 @@ const UP = new THREE.Vector3(0, 1, 0);
 const SYSTEM_RADIUS = 86;
 const EARTH_YEAR_SECONDS = 120;              // ein Erdjahr = 2 Minuten in der Übersicht
 const SIM_DAYS_PER_SECOND = 365.25 / EARTH_YEAR_SECONDS;
+const START_AZ = THREE.MathUtils.degToRad(-25);    // Blickrichtung der Ausgangsansicht
 
 const ui = createUI({
   order: ORDER,
@@ -57,7 +58,8 @@ composer.addPass(new OutputPass());
 const controls = new OrbitControls(camera, renderer.domElement);
 controls.enableDamping = true;
 controls.dampingFactor = 0.06;
-controls.enablePan = false;
+controls.enablePan = true;
+controls.screenSpacePanning = true;
 controls.rotateSpeed = 0.6;
 controls.zoomSpeed = 0.8;
 controls.autoRotateSpeed = 0.18;
@@ -285,6 +287,7 @@ for (const cfg of PLANETS) {
 
   // echte heutige Stellung (mittlere Länge) als Startwinkel
   body.angle = THREE.MathUtils.degToRad((cfg.L0 + cfg.n * daysSinceJ2000) % 360);
+  body.angle0 = body.angle; // Ausgangsposition (heutige echte Stellung)
   body.angularSpeed = THREE.MathUtils.degToRad(cfg.n) * SIM_DAYS_PER_SECOND;
 
   bodies.push(body);
@@ -443,7 +446,7 @@ const state = {
 const easeInOut = (t) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
 const easeOut = (t) => 1 - Math.pow(1 - t, 3);
 
-function flyTo({ pos, target, duration, arc = 0, onDone, toOverview = false }) {
+function flyTo({ pos, target, duration, arc = 0, onDone, toOverview = false, rewind = false }) {
   controls.enabled = false;
   controls.autoRotate = false;
   state.mode = state.mode === 'intro' ? 'intro' : 'flying';
@@ -452,7 +455,7 @@ function flyTo({ pos, target, duration, arc = 0, onDone, toOverview = false }) {
     duration: REDUCED_MOTION ? Math.min(duration, 0.5) : duration,
     fromPos: camera.position.clone(),
     fromTarget: controls.target.clone(),
-    pos, target, arc, onDone, toOverview,
+    pos, target, arc, onDone, toOverview, rewind,
   };
 }
 
@@ -473,18 +476,21 @@ function stepFly(dt) {
   }
 }
 
+// Keine Blickgrenzen: rundherum drehen, auch unter die Planetenebene, weit hinaus zoomen
 function setOverviewLimits() {
-  controls.minDistance = 20;
-  controls.maxDistance = 900;
-  controls.minPolarAngle = THREE.MathUtils.degToRad(4);
-  controls.maxPolarAngle = THREE.MathUtils.degToRad(86);
+  controls.enablePan = true;
+  controls.minDistance = SUN.radius * 1.6;
+  controls.maxDistance = 1600;
+  controls.minPolarAngle = 0;
+  controls.maxPolarAngle = Math.PI;
 }
 function setFocusLimits(body) {
   const r = body.radius * (body.cfg.ring ? 2.4 : body.isSun ? 1.3 : 1);
-  controls.minDistance = r * 1.6;
-  controls.maxDistance = Math.max(r * 30, focusDistance(body) * 2.5);
-  controls.minPolarAngle = 0.05;
-  controls.maxPolarAngle = Math.PI - 0.05;
+  controls.enablePan = false; // Blick bleibt auf dem Planeten, er bewegt sich ja weiter
+  controls.minDistance = r * 1.3;
+  controls.maxDistance = 900;
+  controls.minPolarAngle = 0;
+  controls.maxPolarAngle = Math.PI;
 }
 
 function focus(body) {
@@ -507,32 +513,42 @@ function focus(body) {
   });
 }
 
-function overview(duration = 2.0) {
+function overview(duration = 2.2) {
   state.focus = null;
+  state.moved = false;
   ui.hidePanel();
   updateShiftTarget();
   for (const b of allBodies) b.label.element.classList.remove('active');
-  const az = Math.atan2(camera.position.x, camera.position.z);
+  // Planeten auf dem kürzesten Weg zurück an ihre Ausgangsposition
+  for (const b of bodies) {
+    const diff = THREE.MathUtils.euclideanModulo(b.angle0 - b.angle + Math.PI, Math.PI * 2) - Math.PI;
+    b.rewindFrom = b.angle;
+    b.rewindTo = b.angle + diff;
+  }
   flyTo({
-    pos: () => overviewPose(az),
+    pos: () => overviewPose(START_AZ),
     target: () => new THREE.Vector3(0, 0, 0),
     duration,
     toOverview: true,
+    rewind: true,
     onDone: () => {
       state.mode = 'overview';
       setOverviewLimits();
       controls.update();
       controls.autoRotate = !REDUCED_MOTION;
+      state.idleUntil = performance.now() + 4000;
     },
   });
 }
+// „Ansicht zurücksetzen“-Knopf in der Übersicht
+ui.onReset(() => { if (!state.focus) overview(1.6); else go(null); });
 
 // --- Routing (#erde, #jupiter …) – Browser-Zurück funktioniert -----------------
 function hashId() { return decodeURIComponent(location.hash.slice(1)).toLowerCase(); }
 function route(id) {
   const body = byId.get(id);
   if (body) { if (state.focus !== body) focus(body); }
-  else if (state.focus || (state.mode === 'flying' && !state.fly?.toOverview)) overview();
+  else if (state.focus || (state.mode !== 'overview' && !state.fly?.toOverview)) overview();
 }
 function go(id) {
   const current = state.focus?.cfg.id ?? null;
@@ -587,6 +603,7 @@ renderer.domElement.addEventListener('pointermove', (e) => {
 });
 
 controls.addEventListener('start', () => {
+  if (state.mode === 'overview') state.moved = true;
   controls.autoRotate = false;
   state.idleUntil = performance.now() + 8000;
 });
@@ -625,8 +642,10 @@ function animate() {
   const targetScale = state.focus ? 0.04 : 1;
   state.timeScale += (targetScale - state.timeScale) * (1 - Math.exp(-dt * 2.5));
 
+  const rewindK = state.fly?.rewind ? easeInOut(state.fly.t) : null;
   for (const b of bodies) {
-    b.angle += b.angularSpeed * dt * state.timeScale;
+    if (rewindK !== null) b.angle = b.rewindFrom + (b.rewindTo - b.rewindFrom) * rewindK;
+    else b.angle += b.angularSpeed * dt * state.timeScale;
     b.mesh.rotation.y += b.cfg.spin * dt * 0.6;
     if (b.clouds) b.clouds.rotation.y += b.cfg.spin * dt * 0.75;
     if (b.moonPivot) b.moonPivot.rotation.y += dt * 0.35 * Math.max(state.timeScale, 0.15);
@@ -663,6 +682,9 @@ function animate() {
     controls.update();
   }
 
+  stars.position.copy(camera.position); // Sterne wirken unendlich weit entfernt
+  ui.setOffCenter(state.mode === 'overview' && !state.fly && state.moved);
+
   // Bildausschnitt sanft verschieben
   const ks = 1 - Math.exp(-dt * 5);
   viewShift.x += (viewShift.tx - viewShift.x) * ks;
@@ -680,8 +702,7 @@ function animate() {
 }
 
 // --- Start: Intro-Flug ins Sonnensystem ---------------------------------------
-const startAz = THREE.MathUtils.degToRad(-25);
-camera.position.copy(overviewPose(startAz + 0.9).multiplyScalar(4.5)).add(new THREE.Vector3(0, 250, 0));
+camera.position.copy(overviewPose(START_AZ + 0.9).multiplyScalar(4.5)).add(new THREE.Vector3(0, 250, 0));
 controls.target.set(0, 0, 0);
 camera.lookAt(0, 0, 0);
 setOverviewLimits();
@@ -692,7 +713,7 @@ if (initial) {
   focus(initial);
 } else {
   flyTo({
-    pos: () => overviewPose(startAz),
+    pos: () => overviewPose(START_AZ),
     target: () => new THREE.Vector3(0, 0, 0),
     duration: 3.6,
     onDone: () => {
