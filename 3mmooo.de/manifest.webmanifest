@@ -1,0 +1,25 @@
+{
+  "name": "3mmooo.de – Sonnensystem",
+  "short_name": "3mmooo",
+  "description": "Interaktives 3D-Sonnensystem von Emrah Yamak: IT-Security, NetTools, eigene Software und Browserspiele.",
+  "lang": "de",
+  "start_url": "./",
+  "scope": "./",
+  "display": "fullscreen",
+  "display_override": ["fullscreen", "standalone"],
+  "orientation": "any",
+  "background_color": "#000000",
+  "theme_color": "#000000",
+  "categories": ["education", "entertainment", "utilities"],
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" },
+    { "src": "favicon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ],
+  "shortcuts": [
+    { "name": "NetTools", "url": "nettools.html", "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }] },
+    { "name": "Hack the Mars Base", "url": "hack.html", "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }] },
+    { "name": "Spiele", "url": "./#saturn", "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }] }
+  ]
+}
