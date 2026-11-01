@@ -11,6 +11,7 @@ import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 import { SUN, PLANETS } from './content.js';
 import { createUI } from './ui.js';
 import { createSound } from './sound.js';
+import { createEggs, EGG_DATES } from './eggs.js';
 import { sunVertex, sunFragment, atmoVertex, atmoFragment, ringVertex, ringFragment, starVertex, starFragment } from './shaders.js';
 
 const ORDER = [SUN, ...PLANETS];
@@ -30,6 +31,11 @@ const ui = createUI({
   onTravel: (date) => setTravel(date),
   sound,
 });
+const eggs = createEggs({ toast: (t) => ui.toast(t), getLang: () => ui.lang });
+
+// Für Neugierige, die die Konsole öffnen
+console.log('%c3mmooo.de%c\nHallo Entwickler:in! 👾 Hier gibt es ein paar Easter Eggs.\nTipps: Fang einen Kometen. Kennst du den Konami-Code? Und tipp mal „pluto“.',
+  'font: 700 22px system-ui; color: #ff6b4a', 'font: 13px system-ui; color: inherit');
 
 // --- Renderer ---------------------------------------------------------------
 const canvas = document.getElementById('scene');
@@ -356,10 +362,13 @@ const comet = (() => {
   });
   const tail = new THREE.Mesh(tailGeo, tailMat);
   const group = new THREE.Group();
-  group.add(head, glow, tail);
+  const hit = new THREE.Mesh(hitGeo, hitMat);   // großzügige Trefferfläche
+  hit.scale.setScalar(3.2);
+  hit.userData.egg = 'komet';
+  group.add(head, glow, tail, hit);
   group.visible = false;
   scene.add(group);
-  const c = { group, tail, tailMat, t: 0, active: false, wait: 12 + Math.random() * 20, p0: new THREE.Vector3(), p1: new THREE.Vector3(), p2: new THREE.Vector3(), dur: 26 };
+  const c = { group, hit, tail, tailMat, t: 0, active: false, wait: 12 + Math.random() * 20, p0: new THREE.Vector3(), p1: new THREE.Vector3(), p2: new THREE.Vector3(), dur: 26 };
   c.launch = () => {
     const a = Math.random() * Math.PI * 2, b = a + Math.PI * (0.6 + Math.random() * 0.8);
     const tilt = (Math.random() - 0.5) * 60;
@@ -530,7 +539,8 @@ const state = {
   lastFocusPos: new THREE.Vector3(),
   idleUntil: 0,
   moved: false,
-  travel: null,       // { days, returning } – Zeitreise aktiv
+  travel: null,
+  warp: null,         // Konami-Code-Effekt       // { days, returning } – Zeitreise aktiv
 };
 
 // --- Zeitreise --------------------------------------------------------------------
@@ -540,6 +550,8 @@ function travelAngle(b) {
 }
 function setTravel(date) {
   if (date) {
+    const iso = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+    if (EGG_DATES.includes(iso)) eggs.trigger('zeitreise', iso);
     state.travel = { days: toDays(date), returning: false };
   } else if (state.travel) {
     state.travel = { days: daysSinceJ2000, returning: true };   // sanft zurück nach heute
@@ -599,6 +611,7 @@ function setFocusLimits(body) {
 
 function focus(body) {
   state.focus = body;
+  if (body.cfg.id === 'pluto') setTimeout(() => eggs.trigger('pluto'), 1200);
   ui.showPanel(body.cfg);
   updateShiftTarget();
   for (const b of allBodies) b.label.element.classList.toggle('active', b === body);
@@ -673,12 +686,33 @@ window.addEventListener('hashchange', () => route(hashId()));
 // --- Eingaben -----------------------------------------------------------------
 const raycaster = new THREE.Raycaster();
 const ndc = new THREE.Vector2();
-function pick(e) {
+function aim(e) {
   const rect = renderer.domElement.getBoundingClientRect();
   ndc.set(((e.clientX - rect.left) / rect.width) * 2 - 1, -((e.clientY - rect.top) / rect.height) * 2 + 1);
   raycaster.setFromCamera(ndc, camera);
+}
+function pick(e) {
+  aim(e);
   const hit = raycaster.intersectObjects(hitTargets, false)[0];
   return hit ? hit.object.userData.body : null;
+}
+// Easter Eggs: Komet (nur wenn sichtbar) und Mond
+const moonBody = bodies.find((b) => b.moon);
+if (moonBody) moonBody.moon.userData.egg = 'mond';
+function pickEgg(e) {
+  aim(e);
+  const targets = [];
+  if (comet.group.visible) targets.push(comet.hit);
+  if (moonBody) targets.push(moonBody.moon);
+  const hit = raycaster.intersectObjects(targets, false)[0];
+  return hit ? hit.object.userData.egg : null;
+}
+function catchComet() {
+  comet.active = false;
+  comet.group.visible = false;
+  comet.wait = 25 + Math.random() * 30;
+  sound.whoosh(0.9);
+  eggs.trigger('komet');
 }
 
 // Tippen/Klicken (nicht Ziehen):
@@ -702,6 +736,9 @@ renderer.domElement.addEventListener('pointerup', (e) => {
   const quick = performance.now() - down.t < 500;
   down = null;
   if (moved > 8 || !quick) return;
+  const egg = pickEgg(e);
+  if (egg === 'komet') return catchComet();
+  if (egg === 'mond') return eggs.trigger('mond');
   const body = pick(e);
   if (body && body !== state.focus) go(body.cfg.id);
   else if (state.focus) go(null);
@@ -711,11 +748,11 @@ let hovered = null;
 renderer.domElement.addEventListener('pointermove', (e) => {
   if (e.pointerType !== 'mouse' || e.buttons) return;
   const body = pick(e);
+  renderer.domElement.style.cursor = body || pickEgg(e) ? 'pointer' : '';
   if (body === hovered) return;
   hovered?.label.element.classList.remove('hover');
   hovered = body;
   hovered?.label.element.classList.add('hover');
-  renderer.domElement.style.cursor = body ? 'pointer' : '';
 });
 
 controls.addEventListener('start', () => {
@@ -724,10 +761,24 @@ controls.addEventListener('start', () => {
   state.idleUntil = performance.now() + 8000;
 });
 
+const KONAMI = ['ArrowUp', 'ArrowUp', 'ArrowDown', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'ArrowLeft', 'ArrowRight', 'b', 'a'];
+let konami = 0, typed = '';
+function warp() {
+  state.warp = { t: 0 };
+  sound.whoosh(3);
+  eggs.trigger('warp');
+}
 window.addEventListener('keydown', (e) => {
+  if (e.target.closest?.('input, textarea, select')) return;
+  const key = e.key.length === 1 ? e.key.toLowerCase() : e.key;
+  konami = key === KONAMI[konami] ? konami + 1 : (key === KONAMI[0] ? 1 : 0);
+  if (konami === KONAMI.length) { konami = 0; warp(); return; }
+  if (e.key.length === 1) {
+    typed = (typed + key).slice(-12);
+    if (typed.endsWith('pluto')) { typed = ''; go('pluto'); return; }
+  }
   if (e.key === 'Escape') go(null);
-  if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
-    if (e.target.closest?.('input, textarea, select')) return;
+  if ((e.key === 'ArrowRight' || e.key === 'ArrowLeft') && konami < 5) {
     const i = state.focus ? VISIBLE_ORDER.indexOf(state.focus.cfg) : (e.key === 'ArrowRight' ? -1 : 0);
     const n = VISIBLE_ORDER.length;
     go(VISIBLE_ORDER[(Math.max(i, 0) + (e.key === 'ArrowRight' ? (i < 0 ? 0 : 1) : -1) + n) % n].id);
@@ -815,6 +866,11 @@ function animate() {
   const ks = 1 - Math.exp(-dt * 5);
   viewShift.x += (viewShift.tx - viewShift.x) * ks;
   viewShift.y += (viewShift.ty - viewShift.y) * ks;
+  if (state.warp) {
+    state.warp.t = Math.min(1, state.warp.t + dt / 2.8);
+    camera.fov = 40 + Math.sin(Math.PI * state.warp.t) ** 2 * 70;
+    if (state.warp.t >= 1) { camera.fov = 40; state.warp = null; }
+  }
   camera.setViewOffset(window.innerWidth, window.innerHeight, viewShift.x, viewShift.y, window.innerWidth, window.innerHeight);
 
   // Glow der Sonne etwas zurücknehmen, wenn man nah dran ist
@@ -858,4 +914,4 @@ if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.
   window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
 }
 
-if (new URLSearchParams(location.search).has('debug')) window.__solar = { state, camera, controls, comet, sound };
+if (new URLSearchParams(location.search).has('debug')) window.__solar = { state, camera, controls, comet, sound, moonBody };

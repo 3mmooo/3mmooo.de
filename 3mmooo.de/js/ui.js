@@ -286,8 +286,28 @@ export function createUI({ order, onSelect, onBack, onTravel, sound }) {
   renderSound();
   tick();
 
+  // --- Toast (Easter Eggs) ---------------------------------------------------
+  const toastEl = $('#toast');
+  let toastTimer = 0;
+  function toast({ title, body: text, footer, big }) {
+    toastEl.innerHTML = `<strong>${esc(title)}</strong>` +
+      (text ? `<p>${esc(text)}</p>` : '') + (footer ? `<small>${esc(footer)}</small>` : '');
+    toastEl.classList.toggle('big', !!big);
+    toastEl.hidden = false;
+    requestAnimationFrame(() => toastEl.classList.add('show'));
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(hideToast, big ? 9000 : 6500);
+  }
+  function hideToast() {
+    toastEl.classList.remove('show');
+    setTimeout(() => { if (!toastEl.classList.contains('show')) toastEl.hidden = true; }, 400);
+  }
+  toastEl.addEventListener('click', hideToast);
+
   return {
     makeLabel,
+    toast,
+    get lang() { return lang; },
     onReset(fn) { resetHandler = fn; },
     setOffCenter(on) { body.classList.toggle('off-center', !!on); },
     hideHint,
