@@ -3,5 +3,6 @@
   <url><loc>https://3mmooo.de/</loc><changefreq>weekly</changefreq><priority>1.0</priority></url>
   <url><loc>https://3mmooo.de/nettools.html</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
   <url><loc>https://3mmooo.de/hack.html</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://3mmooo.de/ascii.html</loc><changefreq>monthly</changefreq><priority>0.6</priority></url>
   <url><loc>https://3mmooo.de/snake.html</loc><changefreq>yearly</changefreq><priority>0.4</priority></url>
 </urlset>

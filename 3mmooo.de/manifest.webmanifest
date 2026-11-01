@@ -19,6 +19,7 @@
   ],
   "shortcuts": [
     { "name": "NetTools", "url": "nettools.html", "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }] },
+    { "name": "ASCII-Generator", "url": "ascii.html", "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }] },
     { "name": "Hack the Mars Base", "url": "hack.html", "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }] },
     { "name": "Spiele", "url": "./#saturn", "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }] }
   ]
