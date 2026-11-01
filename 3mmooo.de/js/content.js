@@ -51,7 +51,7 @@ export const PLANETS = [
       { title: 'BarberSino', desc: 'Online-Buchung für Barbershops', url: 'https://barbersino.de/' },
       { title: 'Kilic Dachtechnik', desc: 'Website', url: 'https://www.kilic-dachtechnik.de/' },
       { title: 'NIALMA', desc: 'Website', url: 'https://nialma.com/' },
-      { title: 'Rhein Printpack – 3D-Konfigurator', desc: 'Logo hochladen, Verpackung in 3D sehen, Preis nach Maß – von mir entwickelt', url: 'https://rheinprintpack.de/de/konfigurator/', highlight: true },
+      { title: 'Rhein Verpackung', desc: 'Shop mit 3D-Konfigurator (Demo)', url: 'https://eysec.de/rhein-verpackung/' },
       { title: 'Kilic Immobilien', desc: 'Website', url: 'https://eysec.de/immo/' },
       { title: 'Alle Referenzen auf eysec.de', desc: 'Mit Hintergründen zu jedem Projekt', url: 'https://eysec.de/#referenzen' },
     ],
@@ -353,8 +353,8 @@ export const EN = {
     text: `<p>The fastest planet – for projects I built for clients. Websites, ordering and booking
       platforms, all live in production.</p>`,
     links: ['Ordering platform · treevio.de', 'Online booking for barbershops', 'Website', 'Website',
-      'Upload a logo, see the packaging in 3D, price to size – built by me', 'Website', 'Background on every project'],
-    linkTitles: { 4: 'Rhein Printpack – 3D configurator', 6: 'All references on eysec.de' },
+      'Shop with 3D configurator (demo)', 'Website', 'Background on every project'],
+    linkTitles: { 6: 'All references on eysec.de' },
     facts: [['Diameter', '4,879 km'], ['Distance to Sun', '57.9 million km'], ['Orbit', '88 days'], ['Day length', '176 Earth days']],
   },
   venus: {
