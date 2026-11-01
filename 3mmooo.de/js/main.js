@@ -441,6 +441,7 @@ const state = {
   timeScale: 1,
   lastFocusPos: new THREE.Vector3(),
   idleUntil: 0,
+  moved: false,
 };
 
 const easeInOut = (t) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);

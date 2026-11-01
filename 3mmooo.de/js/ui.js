@@ -138,7 +138,7 @@ export function createUI({ order, onSelect, onBack }) {
   return {
     makeLabel,
     onReset(fn) { resetHandler = fn; },
-    setOffCenter(on) { body.classList.toggle('off-center', on); },
+    setOffCenter(on) { body.classList.toggle('off-center', !!on); },
     hideHint,
     showPanel(cfg) {
       renderPanel(cfg);

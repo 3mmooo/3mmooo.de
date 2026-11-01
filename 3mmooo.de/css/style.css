@@ -113,13 +113,15 @@ button { font: inherit; color: inherit; }
   margin-top: 2px !important;
 }
 #lock .brand {
-  margin: 8px 0 0;
-  font-size: 15px;
-  font-weight: 600;
-  letter-spacing: 0.32em;
-  text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.7);
-  padding-left: 0.32em;
+  margin: 10px 0 0;
+  line-height: 0;
+  color: rgba(255, 255, 255, 0.92);
+}
+#lock .logo {
+  width: clamp(150px, 20vw, 210px);
+  height: auto;
+  aspect-ratio: 168 / 40;
+  filter: drop-shadow(0 2px 10px rgba(0, 0, 0, 0.7)) drop-shadow(0 0 18px rgba(255, 120, 80, 0.18));
 }
 
 /* ---------- Zurück-Button ---------- */
@@ -465,13 +467,14 @@ a.link-card:hover, button.link-card:hover { background: rgba(255, 255, 255, 0.12
   z-index: 20;
   transition: opacity 1.2s ease 0.2s, visibility 0s linear 1.4s;
 }
-#loader span {
-  font-size: 15px;
-  font-weight: 600;
-  letter-spacing: 0.4em;
-  text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.6);
+#loader .logo {
+  width: min(240px, 60vw);
+  height: auto;
+  aspect-ratio: 168 / 40;
+  color: rgba(255, 255, 255, 0.92);
+  animation: logo-breathe 2.4s ease-in-out infinite;
 }
+@keyframes logo-breathe { 50% { opacity: 0.55; } }
 .ready #loader { opacity: 0; visibility: hidden; }
 
 /* ---------- Ohne WebGL / JavaScript ---------- */
