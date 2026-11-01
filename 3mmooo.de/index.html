@@ -6,7 +6,7 @@
   <title>3mmooo.de</title>
   <meta name="description" content="3mmooo.de – ein interaktives Sonnensystem rund um IT, Netzwerke und IT-Security: Blue Teaming, Red Teaming, NetTools und Games.">
   <meta name="theme-color" content="#000000">
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='32' r='14' fill='%23ffb347'/%3E%3Cellipse cx='32' cy='32' rx='29' ry='9' fill='none' stroke='%238A2BE2' stroke-width='3' transform='rotate(-20 32 32)'/%3E%3C/svg%3E">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="css/style.css">
   <script type="importmap">
     {
@@ -19,6 +19,41 @@
   <script type="module" src="js/main.js"></script>
 </head>
 <body>
+  <!-- Logo: die drei „o“ als Planeten (Sonne, Planet mit Mond, Saturn) -->
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+    <defs>
+      <linearGradient id="logo-grad" x1="76" y1="0" x2="138" y2="0" gradientUnits="userSpaceOnUse">
+        <stop offset="0" stop-color="#ffc861"/>
+        <stop offset="0.5" stop-color="#ff6b4a"/>
+        <stop offset="1" stop-color="#b26bff"/>
+      </linearGradient>
+      <mask id="logo-ring-mask" maskUnits="userSpaceOnUse" x="0" y="0" width="168" height="40">
+        <rect width="168" height="40" fill="#fff"/>
+        <circle cx="126" cy="23" r="9.8" fill="#000"/>
+      </mask>
+      <symbol id="logo-3mmooo" viewBox="0 0 168 40">
+        <g fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M2.97 11.89 A5 5 0 1 1 7.5 19 A6 6 0 1 1 2.06 27.54"/>
+          <path d="M20 31 V15 M20 20.5 a5.5 5.5 0 0 1 11 0 V31 M31 20.5 a5.5 5.5 0 0 1 11 0 V31"/>
+          <path d="M48 31 V15 M48 20.5 a5.5 5.5 0 0 1 11 0 V31 M59 20.5 a5.5 5.5 0 0 1 11 0 V31"/>
+        </g>
+        <g fill="none" stroke="url(#logo-grad)" stroke-width="3.5">
+          <circle cx="84" cy="23" r="8"/>
+          <circle cx="104" cy="23" r="8"/>
+          <circle cx="113" cy="12.8" r="1.6" fill="url(#logo-grad)" stroke="none"/>
+          <g transform="rotate(-18 126 23)">
+            <path d="M113.5 23 A12.5 3.6 0 0 1 138.5 23" stroke-width="2" mask="url(#logo-ring-mask)"/>
+          </g>
+          <circle cx="126" cy="23" r="8"/>
+          <g transform="rotate(-18 126 23)">
+            <path d="M138.5 23 A12.5 3.6 0 0 1 113.5 23" stroke-width="2"/>
+          </g>
+        </g>
+        <text x="143" y="31" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="12.5" font-weight="600" fill="currentColor" fill-opacity="0.55" letter-spacing="0.5">.de</text>
+      </symbol>
+    </defs>
+  </svg>
+
   <canvas id="scene" aria-label="Interaktives Sonnensystem. Jeder Planet ist ein Bereich der Website."></canvas>
   <div id="labels" aria-hidden="false"></div>
 
@@ -26,7 +61,7 @@
   <header id="lock">
     <p class="date"></p>
     <p class="time"></p>
-    <h1 class="brand">3mmooo.de</h1>
+    <h1 class="brand"><svg class="logo" viewBox="0 0 168 40" role="img" aria-label="3mmooo.de"><use href="#logo-3mmooo"/></svg></h1>
   </header>
 
   <!-- Zurück-Button im Zoom -->
@@ -52,7 +87,7 @@
     <div class="panel-inner"></div>
   </aside>
 
-  <div id="loader"><span>3mmooo.de</span></div>
+  <div id="loader"><svg class="logo" viewBox="0 0 168 40" role="img" aria-label="3mmooo.de"><use href="#logo-3mmooo"/></svg></div>
 
   <!-- Ersatz-Navigation ohne JavaScript/WebGL (auch für Suchmaschinen) -->
   <nav id="fallback" aria-label="Seitenübersicht">
