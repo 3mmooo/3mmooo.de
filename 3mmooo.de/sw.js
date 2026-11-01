@@ -1,6 +1,6 @@
 // Service Worker: macht 3mmooo.de installierbar und offline startfähig.
 // Strategie: immer zuerst das Netz (damit Updates sofort ankommen), bei Offline der Cache.
-const CACHE = '3mmooo-v3';
+const CACHE = '3mmooo-v4';
 const CORE = [
   './',
   'index.html',
@@ -33,6 +33,10 @@ const CORE = [
   'snake.html',
   'nettools.html',
   'ascii.html',
+  'lib/figlet/figlet.mjs',
+  'lib/figlet/figlet-CP8UBLgW.js',
+  'lib/figlet/fonts.json',
+  'lib/figlet/fonts/Standard.flf',
 ];
 
 self.addEventListener('install', (event) => {
