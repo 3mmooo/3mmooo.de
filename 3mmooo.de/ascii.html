@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>ASCII-Generator – 3mmooo.de</title>
-<meta name="description" content="ASCII-Art-Generator im Browser: Text als Banner (Blöcke, Schattierung, Braille, Matrix), Bilder und Live-Kamera in ASCII umwandeln – alles lokal, nichts wird hochgeladen.">
+<meta name="description" content="ASCII-Art-Generator im Browser: Text in 320 klassischen ASCII-Schriften (FIGlet) oder als Pixel-Banner (Blöcke, Braille, Matrix), Bilder und Live-Kamera in ASCII umwandeln – alles lokal, nichts wird hochgeladen.">
 <meta name="theme-color" content="#000000">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <link rel="canonical" href="https://3mmooo.de/ascii.html">
@@ -118,6 +118,24 @@
   .status.ok { color: #4ade80; }
   .status.err { color: #ff6b6b; }
   footer { color: var(--muted); font-size: 13px; line-height: 1.6; }
+
+  /* Umschalter klassisch / Pixel */
+  .seg { display: inline-flex; padding: 4px; gap: 4px; border-radius: 999px; background: rgba(0, 0, 0, 0.35); border: 1px solid var(--line); flex-wrap: wrap; }
+  .seg button { border: 0; background: none; padding: 8px 14px; border-radius: 999px; font-size: 14px; font-weight: 600; cursor: pointer; color: var(--muted); }
+  .seg button[aria-pressed="true"] { background: var(--acc); color: #1a0703; }
+  .fig-row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr) auto; gap: 10px; align-items: end; }
+  @media (max-width: 620px) { .fig-row { grid-template-columns: 1fr; } }
+
+  /* Vergleich aller Schriften */
+  .gallery-head { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between; }
+  .gallery-head h2 { margin: 0; font-size: 17px; }
+  .gallery { display: flex; flex-direction: column; gap: 12px; }
+  .tile { border-radius: 16px; border: 1px solid var(--line); background: rgba(0, 0, 0, 0.35); overflow: hidden; }
+  .tile header { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 8px 10px 8px 14px; border-bottom: 1px solid var(--line); }
+  .tile h3 { margin: 0; font-size: 13.5px; font-weight: 700; }
+  .tile .mini { padding: 6px 12px; font-size: 12.5px; }
+  .tile .tile-out { overflow-x: auto; }
+  .tile pre { margin: 0; padding: 12px 14px; font: 9px/1.05 var(--mono); color: var(--out-color); white-space: pre; min-height: 60px; }
   video, canvas.work { display: none; }
 </style>
 </head>
@@ -141,10 +159,47 @@
 
   <!-- Text -->
   <section class="card" data-panel="text" aria-labelledby="tab-text">
-    <div class="controls">
-      <label class="field wide">Dein Text
-        <textarea id="txt-in" rows="2" spellcheck="false">3mmooo</textarea>
-      </label>
+    <label class="field wide">Dein Text
+      <textarea id="txt-in" rows="2" spellcheck="false">3mmooo</textarea>
+    </label>
+    <div class="seg" role="group" aria-label="Art der Schrift">
+      <button type="button" id="kind-fig" aria-pressed="true">Klassische ASCII-Schriften (<span id="fig-count">320</span>)</button>
+      <button type="button" id="kind-pix" aria-pressed="false">Pixel-Stile</button>
+    </div>
+
+    <div id="fig-controls">
+      <div class="fig-row">
+        <label class="field">Schrift suchen
+          <input type="text" id="fig-search" placeholder="z. B. slant, 3d, shadow" spellcheck="false" autocomplete="off">
+        </label>
+        <label class="field">Schrift
+          <select id="fig-font"></select>
+        </label>
+        <button class="btn" type="button" id="fig-random" title="Zufällige Schrift">🎲 Zufall</button>
+      </div>
+      <div class="controls" style="margin-top:12px">
+        <label class="field">Abstand
+          <select id="fig-layout">
+            <option value="default">Normal</option>
+            <option value="fitted">Kompakt</option>
+            <option value="full">Breit</option>
+          </select>
+        </label>
+        <label class="field">Max. Breite (Zeichen)
+          <select id="fig-width">
+            <option value="0">Unbegrenzt</option>
+            <option value="80">80 (Terminal)</option>
+            <option value="120">120</option>
+            <option value="60">60</option>
+          </select>
+        </label>
+        <div class="field">Alle auf einen Blick
+          <button class="btn primary" type="button" id="fig-compare">Alle Schriften vergleichen</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="controls" id="pix-controls" hidden>
       <label class="field">Stil
         <select id="txt-style">
           <option value="block">Blöcke █</option>
@@ -247,7 +302,20 @@
     <p class="status" id="status" role="status"></p>
   </section>
 
+  <section class="card" id="gallery-card" hidden aria-labelledby="gallery-title">
+    <div class="gallery-head">
+      <h2 id="gallery-title">Alle Schriften <span class="meta" id="gallery-meta"></span></h2>
+      <div class="row">
+        <input type="text" id="gallery-filter" placeholder="Filtern …" spellcheck="false" autocomplete="off" style="width:180px">
+        <button class="btn" type="button" id="gallery-close">Schließen</button>
+      </div>
+    </div>
+    <p class="hint">Jede Schrift wird erst geladen, wenn du zu ihr scrollst. „Übernehmen“ setzt sie oben als Schrift.</p>
+    <div class="gallery" id="gallery"></div>
+  </section>
+
   <footer>
+    ASCII-Schriften: <a href="https://github.com/patorjk/figlet.js" target="_blank" rel="noopener noreferrer">figlet.js</a> (MIT-Lizenz) mit den klassischen FIGlet-Fonts.
     Tipp: ASCII-Art sieht nur mit einer Festbreitenschrift richtig aus, zum Beispiel in Code-Editoren, im Terminal
     oder in Code-Blöcken (<code>```</code>) bei Discord und GitHub.
   </footer>
@@ -359,10 +427,159 @@
     $('#meta').textContent = text ? `· ${Math.max(...lines.map((l) => [...l].length))} × ${lines.length} Zeichen${info ? ' · ' + info : ''}` : '';
   }
 
-  // ---------- Text ----------
+  // ---------- Klassische ASCII-Schriften (FIGlet) ----------
+  const FAVORITES = ['Standard', 'Slant', 'Big', 'Doom', 'ANSI Shadow', 'ANSI Regular', 'Banner3', 'Block', 'Shadow',
+    'Small', 'Small Slant', '3D-ASCII', 'Larry 3D', 'Isometric1', 'Graffiti', 'Star Wars', 'Bloody', 'Colossal', 'Epic',
+    'Ogre', 'Speed', 'Sub-Zero', 'Univers', 'Electronic', 'Calvin S', 'Delta Corps Priest 1', 'DOS Rebel', 'Elite',
+    'Fire Font-k', 'Ghost', 'Poison', 'Rectangles', 'Stop', 'Alpha', 'Big Money-ne', 'Swamp Land', 'Train',
+    'Def Leppard', 'Rammstein', "Patorjk's Cheese", 'Georgia11', 'Roman', 'Cyberlarge', 'Basic', 'Lean', 'Merlin1'];
+  const FONT_STORE = '3mmooo-ascii-font';
+  let figlet = null, allFonts = [], kind = 'fig';
+
+  async function loadFiglet() {
+    if (figlet) return figlet;
+    const mod = await import('./lib/figlet/figlet.mjs');
+    figlet = mod.default;
+    figlet.defaults({ fontPath: './lib/figlet/fonts' });
+    allFonts = await (await fetch('lib/figlet/fonts.json')).json();
+    $('#fig-count').textContent = allFonts.length;
+    fillFontSelect();
+    return figlet;
+  }
+
+  function fillFontSelect() {
+    const q = $('#fig-search').value.trim().toLowerCase();
+    const sel = $('#fig-font');
+    const keep = sel.value || (() => { try { return localStorage.getItem(FONT_STORE); } catch { return null; } })() || 'Standard';
+    const match = (f) => !q || f.toLowerCase().includes(q);
+    const fav = FAVORITES.filter((f) => allFonts.includes(f) && match(f));
+    const rest = allFonts.filter((f) => !FAVORITES.includes(f) && match(f));
+    const opt = (f) => `<option value="${escAttr(f)}">${escHtml(f)}</option>`;
+    sel.innerHTML = (fav.length ? `<optgroup label="Beliebt">${fav.map(opt).join('')}</optgroup>` : '') +
+      (rest.length ? `<optgroup label="Alle A–Z">${rest.map(opt).join('')}</optgroup>` : '');
+    if ([...sel.options].some((o) => o.value === keep)) sel.value = keep;
+    else if (sel.options.length && q) { sel.selectedIndex = 0; }
+  }
+  const escHtml = (t) => String(t).replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
+  const escAttr = (t) => escHtml(t).replace(/"/g, '&quot;');
+
+  function figOptions(font) {
+    const width = +$('#fig-width').value;
+    return { font, horizontalLayout: $('#fig-layout').value, width: width || 1000, whitespaceBreak: true };
+  }
+  function cleanFig(t) {
+    const lines = t.replace(/\r/g, '').split('\n').map((l) => l.replace(/\s+$/, ''));
+    return trimBlock(lines);
+  }
+
+  let figToken = 0;
+  async function renderFig() {
+    const raw = $('#txt-in').value.replace(/\r/g, '');
+    if (!raw.trim()) { show(''); return; }
+    const token = ++figToken;
+    try {
+      await loadFiglet();
+      const font = $('#fig-font').value || 'Standard';
+      try { localStorage.setItem(FONT_STORE, font); } catch {}
+      // jede Zeile einzeln, damit Zeilenumbrüche erhalten bleiben
+      const parts = [];
+      for (const line of raw.split('\n')) parts.push(line.trim() ? cleanFig(await figlet.text(line, figOptions(font))) : '');
+      if (token !== figToken) return;
+      show(parts.join('\n\n'), null, font);
+      setStatus('');
+    } catch (e) {
+      if (token === figToken) setStatus('Die Schrift konnte nicht geladen werden.', 'err');
+    }
+  }
+
+  function setKind(k) {
+    kind = k;
+    $('#kind-fig').setAttribute('aria-pressed', String(k === 'fig'));
+    $('#kind-pix').setAttribute('aria-pressed', String(k === 'pix'));
+    $('#fig-controls').hidden = k !== 'fig';
+    $('#pix-controls').hidden = k !== 'pix';
+    renderText();
+  }
+  $('#kind-fig').addEventListener('click', () => setKind('fig'));
+  $('#kind-pix').addEventListener('click', () => setKind('pix'));
+  $('#fig-search').addEventListener('input', () => { fillFontSelect(); renderFig(); });
+  $('#fig-font').addEventListener('change', renderFig);
+  $('#fig-layout').addEventListener('change', renderFig);
+  $('#fig-width').addEventListener('change', renderFig);
+  $('#fig-random').addEventListener('click', async () => {
+    await loadFiglet();
+    $('#fig-search').value = '';
+    fillFontSelect();
+    $('#fig-font').value = allFonts[Math.floor(Math.random() * allFonts.length)];
+    renderFig();
+  });
+
+  // Vergleich: Text in allen Schriften, jede erst beim Hinscrollen geladen
+  let galleryObserver = null;
+  async function openGallery() {
+    await loadFiglet();
+    const card = $('#gallery-card');
+    card.hidden = false;
+    buildGallery();
+    card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+  function galleryText() {
+    const t = $('#txt-in').value.split('\n').find((l) => l.trim()) || '3mmooo';
+    return t.slice(0, 24);
+  }
+  function buildGallery() {
+    const q = $('#gallery-filter').value.trim().toLowerCase();
+    const fonts = allFonts.filter((f) => !q || f.toLowerCase().includes(q));
+    $('#gallery-meta').textContent = `· ${fonts.length} Schriften`;
+    const box = $('#gallery');
+    galleryObserver?.disconnect();
+    box.innerHTML = fonts.map((f, i) => `
+      <article class="tile" data-font="${escAttr(f)}">
+        <header><h3>${escHtml(f)}</h3>
+          <div class="row"><button class="btn mini" data-use>Übernehmen</button><button class="btn mini" data-copy>Kopieren</button></div>
+        </header>
+        <div class="tile-out"><pre id="g-${i}">…</pre></div>
+      </article>`).join('');
+    const text = galleryText();
+    galleryObserver = new IntersectionObserver((entries) => {
+      for (const en of entries) {
+        if (!en.isIntersecting) continue;
+        galleryObserver.unobserve(en.target);
+        const tile = en.target, font = tile.dataset.font;
+        figlet.text(text, { font, horizontalLayout: 'default', width: 1000 })
+          .then((t) => { tile.querySelector('pre').textContent = cleanFig(t) || '(Diese Schrift kennt diese Zeichen nicht)'; })
+          .catch(() => { tile.querySelector('pre').textContent = '(Schrift konnte nicht geladen werden)'; });
+      }
+    }, { rootMargin: '400px 0px' });
+    box.querySelectorAll('.tile').forEach((t) => galleryObserver.observe(t));
+  }
+  $('#fig-compare').addEventListener('click', openGallery);
+  $('#gallery-close').addEventListener('click', () => { $('#gallery-card').hidden = true; galleryObserver?.disconnect(); });
+  $('#gallery-filter').addEventListener('input', buildGallery);
+  $('#gallery').addEventListener('click', (e) => {
+    const tile = e.target.closest('.tile');
+    if (!tile) return;
+    if (e.target.closest('[data-use]')) {
+      $('#fig-search').value = '';
+      fillFontSelect();
+      $('#fig-font').value = tile.dataset.font;
+      setKind('fig');
+      $('#tab-text').scrollIntoView({ behavior: 'smooth' });
+    } else if (e.target.closest('[data-copy]')) {
+      const text = tile.querySelector('pre').textContent;
+      navigator.clipboard.writeText(text).then(() => setStatus(`„${tile.dataset.font}“ kopiert ✓`, 'ok'))
+        .catch(() => setStatus('Kopieren nicht erlaubt – bitte den Text markieren und kopieren.', 'err'));
+    }
+  });
+
+  // ---------- Pixel-Stile (Text per Canvas abtasten) ----------
   const textCanvas = document.createElement('canvas');
   const tctx = textCanvas.getContext('2d');
   function renderText() {
+    if (kind === 'fig') return renderFig();
+    return renderPixel();
+  }
+  function renderPixel() {
     const raw = $('#txt-in').value.replace(/\r/g, '');
     const style = $('#txt-style').value;
     const rowsPerLine = +$('#txt-rows').value;
@@ -516,7 +733,15 @@
   }
   document.querySelectorAll('.tab').forEach((t) => t.addEventListener('click', () => setMode(t.dataset.mode)));
 
-  ['#txt-in', '#txt-style', '#txt-font', '#txt-rows'].forEach((s) => $(s).addEventListener('input', renderText));
+  ['#txt-style', '#txt-font', '#txt-rows'].forEach((s) => $(s).addEventListener('input', renderPixel));
+  let typeTimer = 0;
+  $('#txt-in').addEventListener('input', () => {
+    clearTimeout(typeTimer);
+    typeTimer = setTimeout(() => {
+      renderText();
+      if (!$('#gallery-card').hidden) buildGallery();
+    }, 150);
+  });
   ['#img-cols', '#img-ramp', '#img-contrast', '#img-invert', '#img-color'].forEach((s) => $(s).addEventListener('input', renderImage));
 
   function setStatus(msg, kind = '') { const s = $('#status'); s.textContent = msg; s.className = 'status ' + kind; }
