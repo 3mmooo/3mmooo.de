@@ -10,9 +10,11 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 import { SUN, PLANETS } from './content.js';
 import { createUI } from './ui.js';
+import { createSound } from './sound.js';
 import { sunVertex, sunFragment, atmoVertex, atmoFragment, ringVertex, ringFragment, starVertex, starFragment } from './shaders.js';
 
 const ORDER = [SUN, ...PLANETS];
+const VISIBLE_ORDER = ORDER.filter((c) => !c.hidden);   // Pluto bleibt versteckt
 const REDUCED_MOTION = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 const UP = new THREE.Vector3(0, 1, 0);
 const SYSTEM_RADIUS = 86;
@@ -20,10 +22,13 @@ const EARTH_YEAR_SECONDS = 120;              // ein Erdjahr = 2 Minuten in der �
 const SIM_DAYS_PER_SECOND = 365.25 / EARTH_YEAR_SECONDS;
 const START_AZ = THREE.MathUtils.degToRad(-25);    // Blickrichtung der Ausgangsansicht
 
+const sound = createSound();
 const ui = createUI({
-  order: ORDER,
+  order: VISIBLE_ORDER,
   onSelect: (id) => go(id),
   onBack: () => go(null),
+  onTravel: (date) => setTravel(date),
+  sound,
 });
 
 // --- Renderer ---------------------------------------------------------------
@@ -277,6 +282,7 @@ for (const cfg of PLANETS) {
     new THREE.BufferGeometry().setFromPoints(pts),
     new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.12, depthWrite: false }),
   );
+  if (cfg.hidden) body.orbit.visible = false;   // Easter Egg: keine Bahnlinie
   scene.add(body.orbit);
 
   // Label
@@ -299,10 +305,91 @@ const hitTargets = allBodies.map((b) => b.hit);
 
 function placeBodies() {
   for (const b of bodies) {
-    b.group.position.set(Math.cos(b.angle) * b.cfg.distance, 0, -Math.sin(b.angle) * b.cfg.distance);
+    const x = Math.cos(b.angle) * b.cfg.distance, z = -Math.sin(b.angle) * b.cfg.distance;
+    const inc = b.cfg.inclination || 0;   // geneigte Bahn (Pluto)
+    b.group.position.set(x, -z * Math.sin(inc), z * Math.cos(inc));
   }
 }
 placeBodies();
+
+// --- Asteroidengürtel zwischen Mars und Jupiter ----------------------------------
+const belt = (() => {
+  const count = isTouch ? 900 : 1600;
+  const geo = new THREE.IcosahedronGeometry(1, 0);
+  const mat = new THREE.MeshStandardMaterial({ color: '#8f8578', roughness: 1, flatShading: true });
+  const mesh = new THREE.InstancedMesh(geo, mat, count);
+  const m = new THREE.Matrix4(), q = new THREE.Quaternion(), e = new THREE.Euler(), v = new THREE.Vector3(), sc = new THREE.Vector3();
+  const color = new THREE.Color();
+  for (let i = 0; i < count; i++) {
+    const a = Math.random() * Math.PI * 2;
+    const r = 34 + Math.random() * 5.5 + (Math.random() - 0.5) * 1.5;
+    v.set(Math.cos(a) * r, (Math.random() - 0.5) * 1.6, -Math.sin(a) * r);
+    e.set(Math.random() * 6, Math.random() * 6, Math.random() * 6);
+    const k = 0.05 + Math.random() ** 3 * 0.22;
+    sc.set(k * (0.7 + Math.random() * 0.6), k, k * (0.7 + Math.random() * 0.6));
+    m.compose(v, q.setFromEuler(e), sc);
+    mesh.setMatrixAt(i, m);
+    mesh.setColorAt(i, color.setHSL(0.08, 0.12 + Math.random() * 0.1, 0.32 + Math.random() * 0.25));
+  }
+  mesh.frustumCulled = false;
+  const group = new THREE.Group();
+  group.add(mesh);
+  scene.add(group);
+  return { group, speed: THREE.MathUtils.degToRad(0.224) * SIM_DAYS_PER_SECOND };  // ~4,4 Jahre Umlauf
+})();
+
+// --- Komet: fliegt ab und zu durchs Sonnensystem, Schweif zeigt immer von der Sonne weg ---
+const comet = (() => {
+  const head = new THREE.Mesh(new THREE.SphereGeometry(0.35, 16, 12), new THREE.MeshBasicMaterial({ color: new THREE.Color(2.2, 2.4, 2.6) }));
+  const glow = new THREE.Sprite(new THREE.SpriteMaterial({
+    map: glowTexture([[0, 'rgba(210,235,255,1)'], [0.3, 'rgba(150,200,255,0.35)'], [1, 'rgba(0,0,0,0)']]),
+    blending: THREE.AdditiveBlending, depthWrite: false, transparent: true,
+  }));
+  glow.scale.setScalar(4);
+  const tailGeo = new THREE.CylinderGeometry(0.05, 1, 1, 24, 1, true);
+  tailGeo.translate(0, 0.5, 0);
+  const tailMat = new THREE.ShaderMaterial({
+    uniforms: { strength: { value: 0 } },
+    vertexShader: 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }',
+    fragmentShader: 'uniform float strength; varying vec2 vUv; void main(){ float a = pow(1.0 - vUv.y, 2.2) * strength; gl_FragColor = vec4(vec3(0.55,0.75,1.0) * a * 1.6, a); }',
+    transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide,
+  });
+  const tail = new THREE.Mesh(tailGeo, tailMat);
+  const group = new THREE.Group();
+  group.add(head, glow, tail);
+  group.visible = false;
+  scene.add(group);
+  const c = { group, tail, tailMat, t: 0, active: false, wait: 12 + Math.random() * 20, p0: new THREE.Vector3(), p1: new THREE.Vector3(), p2: new THREE.Vector3(), dur: 26 };
+  c.launch = () => {
+    const a = Math.random() * Math.PI * 2, b = a + Math.PI * (0.6 + Math.random() * 0.8);
+    const tilt = (Math.random() - 0.5) * 60;
+    c.p0.set(Math.cos(a) * 170, tilt, Math.sin(a) * 170);
+    c.p2.set(Math.cos(b) * 170, -tilt * 0.6, Math.sin(b) * 170);
+    const mid = (a + b) / 2;
+    c.p1.set(Math.cos(mid) * 6, 0, Math.sin(mid) * 6).multiplyScalar(-1);   // Kontrollpunkt nahe der Sonne
+    c.t = 0; c.active = true; group.visible = true;
+  };
+  const pos = new THREE.Vector3(), away = new THREE.Vector3();
+  c.update = (dt) => {
+    if (!c.active) {
+      c.wait -= dt;
+      if (c.wait <= 0 && !REDUCED_MOTION) c.launch();
+      return;
+    }
+    c.t += dt / c.dur;
+    if (c.t >= 1) { c.active = false; group.visible = false; c.wait = 35 + Math.random() * 45; return; }
+    const u = c.t, iu = 1 - u;
+    pos.set(0, 0, 0).addScaledVector(c.p0, iu * iu).addScaledVector(c.p1, 2 * iu * u).addScaledVector(c.p2, u * u);
+    group.position.copy(pos);
+    const dist = pos.length();
+    away.copy(pos).normalize();
+    const len = THREE.MathUtils.clamp(260 / (dist + 8), 2, 22);   // Schweif wird nahe der Sonne länger
+    c.tail.quaternion.setFromUnitVectors(UP, away);
+    c.tail.scale.set(len * 0.09, len, len * 0.09);
+    c.tailMat.uniforms.strength.value = THREE.MathUtils.clamp(1.4 - dist / 140, 0.15, 1);
+  };
+  return c;
+})();
 
 // --- Prozedurale Texturen im Hintergrund erzeugen ---------------------------
 const maxAniso = renderer.capabilities.getMaxAnisotropy();
@@ -328,13 +415,14 @@ const jobs = [
   { type: 'uranus', w: 512, h: 256, body: 'uranus' },
   { type: 'venus', w: 1024, h: 512, body: 'venus' },
   { type: 'mercury', w: 1024, h: 512, body: 'merkur' },
+  { type: 'pluto', w: 512, h: 256, body: 'pluto' },
 ];
 
 function applyTexture(msg) {
   const job = jobs[msg.id];
   const body = byId.get(job.body);
   const tex = dataTexture(msg.color, msg.w, msg.h);
-  const rocky = ['mercury', 'mars', 'moon'].includes(job.type);
+  const rocky = ['mercury', 'mars', 'moon', 'pluto'].includes(job.type);
   const mat = job.moon ? body.moonMat : body.mat;
   mat.map = tex;
   mat.color.set(0xffffff);
@@ -442,12 +530,27 @@ const state = {
   lastFocusPos: new THREE.Vector3(),
   idleUntil: 0,
   moved: false,
+  travel: null,       // { days, returning } – Zeitreise aktiv
 };
+
+// --- Zeitreise --------------------------------------------------------------------
+const toDays = (date) => (date.getTime() - J2000) / 86400000;
+function travelAngle(b) {
+  return b.angle0 + THREE.MathUtils.degToRad(b.cfg.n) * (state.travel.days - daysSinceJ2000);
+}
+function setTravel(date) {
+  if (date) {
+    state.travel = { days: toDays(date), returning: false };
+  } else if (state.travel) {
+    state.travel = { days: daysSinceJ2000, returning: true };   // sanft zurück nach heute
+  }
+}
 
 const easeInOut = (t) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
 const easeOut = (t) => 1 - Math.pow(1 - t, 3);
 
 function flyTo({ pos, target, duration, arc = 0, onDone, toOverview = false, rewind = false }) {
+  if (state.mode !== 'intro') sound.whoosh(duration);
   controls.enabled = false;
   controls.autoRotate = false;
   state.mode = state.mode === 'intro' ? 'intro' : 'flying';
@@ -522,7 +625,8 @@ function overview(duration = 2.2) {
   for (const b of allBodies) b.label.element.classList.remove('active');
   // Planeten auf dem kürzesten Weg zurück an ihre Ausgangsposition
   for (const b of bodies) {
-    const diff = THREE.MathUtils.euclideanModulo(b.angle0 - b.angle + Math.PI, Math.PI * 2) - Math.PI;
+    const goal = state.travel ? travelAngle(b) : b.angle0;
+    const diff = state.travel ? goal - b.angle : THREE.MathUtils.euclideanModulo(goal - b.angle + Math.PI, Math.PI * 2) - Math.PI;
     b.rewindFrom = b.angle;
     b.rewindTo = b.angle + diff;
   }
@@ -623,9 +727,10 @@ controls.addEventListener('start', () => {
 window.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') go(null);
   if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
-    const i = state.focus ? ORDER.indexOf(state.focus.cfg) : (e.key === 'ArrowRight' ? -1 : 0);
-    const n = ORDER.length;
-    go(ORDER[(i + (e.key === 'ArrowRight' ? 1 : -1) + n) % n].id);
+    if (e.target.closest?.('input, textarea, select')) return;
+    const i = state.focus ? VISIBLE_ORDER.indexOf(state.focus.cfg) : (e.key === 'ArrowRight' ? -1 : 0);
+    const n = VISIBLE_ORDER.length;
+    go(VISIBLE_ORDER[(Math.max(i, 0) + (e.key === 'ArrowRight' ? (i < 0 ? 0 : 1) : -1) + n) % n].id);
   }
 });
 
@@ -655,9 +760,15 @@ function animate() {
   state.timeScale += (targetScale - state.timeScale) * (1 - Math.exp(-dt * 2.5));
 
   const rewindK = state.fly?.rewind ? easeInOut(state.fly.t) : null;
+  const travelK = 1 - Math.exp(-dt * 3.5);
+  let travelDone = !!state.travel?.returning;
   for (const b of bodies) {
     if (rewindK !== null) b.angle = b.rewindFrom + (b.rewindTo - b.rewindFrom) * rewindK;
-    else b.angle += b.angularSpeed * dt * state.timeScale;
+    else if (state.travel) {
+      const goal = travelAngle(b);
+      b.angle += (goal - b.angle) * travelK;
+      if (Math.abs(goal - b.angle) > 0.002) travelDone = false;
+    } else b.angle += b.angularSpeed * dt * state.timeScale;
     b.mesh.rotation.y += b.cfg.spin * dt * 0.6;
     if (b.clouds) b.clouds.rotation.y += b.cfg.spin * dt * 0.75;
     if (b.moonPivot) b.moonPivot.rotation.y += dt * 0.35 * Math.max(state.timeScale, 0.15);
@@ -665,7 +776,10 @@ function animate() {
     const targetOpacity = state.focus ? 0.035 : focusedOrHover ? 0.4 : 0.12;
     b.orbit.material.opacity += (targetOpacity - b.orbit.material.opacity) * (1 - Math.exp(-dt * 5));
   }
+  if (travelDone) { for (const b of bodies) b.angle = b.angle0; state.travel = null; }
   placeBodies();
+  belt.group.rotation.y += belt.speed * dt * (state.travel ? 0 : state.timeScale);
+  comet.update(dt);
 
   for (const b of bodies) {
     if (b.atmo) b.atmo.material.uniforms.sunPos.value.copy(sunWorld);
@@ -739,4 +853,9 @@ if (initial) {
 animate();
 requestAnimationFrame(() => ui.ready());
 
-if (new URLSearchParams(location.search).has('debug')) window.__solar = { state, camera, controls };
+// Als App installierbar + offline startfähig
+if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {
+  window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
+}
+
+if (new URLSearchParams(location.search).has('debug')) window.__solar = { state, camera, controls, comet, sound };

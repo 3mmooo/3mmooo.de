@@ -3,10 +3,43 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>3mmooo.de</title>
-  <meta name="description" content="3mmooo.de – ein interaktives Sonnensystem rund um IT, Netzwerke und IT-Security: Blue Teaming, Red Teaming, NetTools und Games.">
+  <title>3mmooo.de – Emrah Yamak · IT-Security, Software &amp; Spiele</title>
+  <meta name="description" content="3mmooo.de von Emrah Yamak: ein interaktives 3D-Sonnensystem rund um IT-Security, Blue &amp; Red Teaming, Netzwerk-Tools, eigene Software und Browserspiele.">
+  <meta name="author" content="Emrah Yamak">
+  <link rel="canonical" href="https://3mmooo.de/">
   <meta name="theme-color" content="#000000">
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <!-- App: installierbar auf dem Homescreen -->
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="3mmooo">
+  <!-- Suchmaschinen: wer und was steckt hinter der Seite -->
+  <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "WebSite",
+          "name": "3mmooo.de",
+          "url": "https://3mmooo.de/",
+          "inLanguage": ["de", "en"],
+          "author": { "@id": "https://3mmooo.de/#person" }
+        },
+        {
+          "@type": "Person",
+          "@id": "https://3mmooo.de/#person",
+          "name": "Emrah Yamak",
+          "jobTitle": "Entwickler, Cybersecurity, Datenschutzbeauftragter",
+          "address": { "@type": "PostalAddress", "addressLocality": "Meerbusch", "addressCountry": "DE" },
+          "url": "https://3mmooo.de/",
+          "sameAs": ["https://eysec.de/", "https://linkedin.com/in/emrah-yamak", "https://github.com/3mmooo"]
+        }
+      ]
+    }
+  </script>
   <link rel="stylesheet" href="css/style.css">
   <script type="importmap">
     {
@@ -64,6 +97,24 @@
     <h1 class="brand"><svg class="logo" viewBox="0 0 168 40" role="img" aria-label="3mmooo.de"><use href="#logo-3mmooo"/></svg></h1>
   </header>
 
+  <!-- Oben links in der Übersicht: Zeitreise -->
+  <button id="travel-btn" type="button">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 7.5V12l3 2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    <span>Zeitreise</span>
+  </button>
+
+  <!-- Oben rechts: Ansicht zurücksetzen, Sound, Sprache -->
+  <div id="toolbar">
+    <button id="recenter" type="button" aria-label="Ansicht zurücksetzen" title="Ansicht zurücksetzen">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7M3 4v4h4" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="12" r="2.5" fill="currentColor"/></svg>
+    </button>
+    <button id="sound-btn" class="tool-btn" type="button" aria-pressed="false">
+      <svg class="ico-off" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z" fill="currentColor"/><path d="m16 9.5 5 5m0-5-5 5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      <svg class="ico-on" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z" fill="currentColor"/><path d="M15.5 9a4 4 0 0 1 0 6M18 6.5a7.5 7.5 0 0 1 0 11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+    </button>
+    <button id="lang-btn" class="tool-btn" type="button">EN</button>
+  </div>
+
   <!-- Zurück-Button im Zoom -->
   <button id="back" type="button" aria-label="Zurück zum Sonnensystem">
     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 5-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
@@ -72,12 +123,22 @@
 
   <div id="bottom">
     <p id="hint">Tippe auf einen Planeten</p>
+    <div id="travelbar" hidden>
+      <div class="travel-row">
+        <label for="travel-date" id="travel-hint">Wo standen die Planeten an diesem Tag?</label>
+        <button id="travel-close" type="button" aria-label="Zeitreise beenden">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>
+        </button>
+      </div>
+      <div class="travel-row">
+        <input id="travel-date" type="date" min="1800-01-01" max="2200-12-31">
+        <button id="travel-today" type="button">Heute</button>
+      </div>
+      <input id="travel-range" type="range" min="-18262" max="18262" step="1" value="0" aria-label="Datum verschieben (±50 Jahre)">
+      <div class="travel-scale" aria-hidden="true"><span>−50</span><span>0</span><span>+50</span></div>
+    </div>
     <nav id="dock" aria-label="Bereiche"></nav>
   </div>
-
-  <button id="recenter" type="button" aria-label="Ansicht zurücksetzen" title="Ansicht zurücksetzen">
-    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7M3 4v4h4" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="12" r="2.5" fill="currentColor"/></svg>
-  </button>
 
   <aside id="panel" aria-hidden="true" aria-live="polite">
     <div class="grip" aria-hidden="true"></div>
@@ -89,12 +150,21 @@
 
   <div id="loader"><svg class="logo" viewBox="0 0 168 40" role="img" aria-label="3mmooo.de"><use href="#logo-3mmooo"/></svg></div>
 
-  <!-- Ersatz-Navigation ohne JavaScript/WebGL (auch für Suchmaschinen) -->
+  <!-- Inhaltsübersicht in Textform: für Suchmaschinen und Screenreader, ohne WebGL sichtbar -->
   <nav id="fallback" aria-label="Seitenübersicht">
-    <h1>3mmooo.de</h1>
-    <p>Dein Browser unterstützt leider kein WebGL – hier die Bereiche als Liste:</p>
+    <h1>3mmooo.de – Emrah Yamak</h1>
+    <p>Persönliche Website von Emrah Yamak, Entwickler, Cybersecurity-Fachkraft und Datenschutzbeauftragter
+      aus Meerbusch. Die Seite ist ein interaktives 3D-Sonnensystem: Jeder Planet ist ein Bereich.</p>
+    <p class="no-webgl-only">Dein Browser unterstützt leider kein WebGL – hier die Bereiche als Liste:</p>
     <ul>
-      <li><a href="https://linkedin.com/in/emrah-yamak">About Me (LinkedIn)</a></li>
+      <li>About Me: IT-Support, Fachkraft Systemadministration &amp; Cybersecurity, IT-Sicherheitsbeauftragter (ISO 27001),
+        BSI IT-Grundschutz-Praktiker, Datenschutzbeauftragter (IHK). <a href="https://eysec.de/">eysec.de</a>,
+        <a href="https://linkedin.com/in/emrah-yamak">LinkedIn</a></li>
+      <li>Projekte: <a href="https://fonavio.de/">Fonavio</a> (KI-Telefonagent), <a href="https://billavio.de/">Billavio</a>
+        (Büro-Software), <a href="https://rotavio.de/">Rotavio</a> (Dienstplan), <a href="https://dinervio.de/">Dinervio</a> (Restaurant-Bestellshops)</li>
+      <li>NetTools: <a href="nettools.html">Subnetzrechner, DNS- und E-Mail-Sicherheitscheck, Port-Lexikon, Nmap-Baukasten,
+        Passwort-Generator, Encoder &amp; JWT-Decoder</a></li>
+      <li>Hacking-Challenge: <a href="hack.html">Hack the Mars Base</a> – Login-CTF im Browser</li>
       <li>Blue Teaming:
         <a href="https://urlxray.com">URL-Checker</a>,
         <a href="https://www.virustotal.com/gui/home/upload">VirusTotal</a>,
@@ -112,6 +182,6 @@
     <p>Angaben gemäß § 5 DDG: Emrah Yamak, eysec, Hochstr. 29, 40670 Meerbusch, Deutschland.
        E-Mail: kontakt@3vio.de. Verantwortlich nach § 18 Abs. 2 MStV: Emrah Yamak, Anschrift wie oben.</p>
   </nav>
-  <noscript><style>#fallback{display:block}#loader,#lock,#bottom,#back{display:none}</style></noscript>
+  <noscript><style>#fallback{position:static;width:auto;height:auto;clip:auto;clip-path:none;white-space:normal;padding:40px 24px;max-width:720px;margin:0 auto;line-height:1.6}#fallback .no-webgl-only{display:block}#loader,#lock,#bottom,#back,#toolbar,#travel-btn{display:none}html,body{overflow:auto}</style></noscript>
 </body>
 </html>

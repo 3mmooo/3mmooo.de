@@ -238,6 +238,24 @@ const recipes = {
     return { color, ring, ringWidth: rw };
   },
 
+  pluto(w, h) {
+    const { fbm, rnd } = makeNoise(134);
+    const craters = makeCraters(rnd, 60, 0.015, 0.08);
+    return { color: paint(w, h, (x, y, z, lat, lon) => {
+      const n = fbm(x * 3, y * 3, z * 3, 5);
+      const v = clamp(0.5 + n * 0.6 + craterShade(craters, x, y, z) * 0.5);
+      let c = ramp([[0, hex('#5b3f2e')], [0.45, hex('#a77e5e')], [0.8, hex('#d9bfa0')], [1, hex('#efe2cf')]], v);
+      // dunkler Äquatorgürtel (Cthulhu Macula)
+      c = mix(c, hex('#3a2418'), smooth(0.2, 0.05, Math.abs(lat + 0.1)) * smooth(-0.1, 0.2, fbm(x * 2 + 4, y * 2, z * 2, 3)) * 0.8);
+      // helles „Herz“ (Tombaugh Regio): zwei überlappende Kreise
+      const hx = Math.cos(0.35) * Math.cos(2.9), hy = Math.sin(0.35), hz = Math.cos(0.35) * Math.sin(2.9);
+      const gx = Math.cos(0.2) * Math.cos(3.25), gy = Math.sin(0.2), gz = Math.cos(0.2) * Math.sin(3.25);
+      const d1 = Math.hypot(x - hx, y - hy, z - hz), d2 = Math.hypot(x - gx, y - gy, z - gz);
+      const heart = Math.max(smooth(0.42, 0.3, d1), smooth(0.36, 0.24, d2));
+      return mix(c, hex('#f6efe6'), heart * 0.92);
+    }) };
+  },
+
   uranus(w, h) {
     const { fbm } = makeNoise(17);
     return { color: paint(w, h, (x, y, z) => {

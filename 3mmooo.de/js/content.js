@@ -232,13 +232,15 @@ export const PLANETS = [
     spin: -0.18,
     atmosphere: { color: '#b5f3ff', strength: 0.8 },
     L0: 313.23, n: 0.01173,
-    // TODO: Beschreibungen und Download-Links eintragen, sobald die Dateien online sind
-    text: `<p>Eigene Netzwerk- und Admin-Tools. Die Python-Tools gibt es mit Quellcode auf GitHub.</p>`,
+    text: `<p>Netzwerk-Werkzeuge, die direkt im Browser laufen – plus meine Python-Tools mit
+      Quellcode auf GitHub.</p>`,
     links: [
-      { title: 'SubCalculator', desc: 'Subnetz-Rechner', soon: true },
-      { title: 'NiP-NWTool', desc: 'Netzwerk-Tool', soon: true },
-      { title: 'DuD-NWTool', desc: 'Netzwerk-Tool', soon: true },
-      { title: 'AD-Tool', desc: 'Active-Directory-Tool', soon: true },
+      { title: 'NetTools öffnen', desc: 'Alle Werkzeuge auf einer Seite', url: 'nettools.html', internal: true, highlight: true },
+      { title: 'Subnetzrechner', desc: 'IPv4 & IPv6: Netz, Broadcast, Hosts, Aufteilen', url: 'nettools.html#subnetz', internal: true },
+      { title: 'DNS & E-Mail-Sicherheit', desc: 'DNS-Einträge abfragen, SPF und DMARC prüfen', url: 'nettools.html#dns', internal: true },
+      { title: 'Ports & Nmap-Baukasten', desc: 'Port-Lexikon und Nmap-Befehle für eigene Scans', url: 'nettools.html#ports', internal: true },
+      { title: 'Passwort-Generator', desc: 'Sichere Passwörter & Passphrasen mit Stärke-Check', url: 'nettools.html#passwort', internal: true },
+      { title: 'Encoder & JWT', desc: 'Base64, URL, Hex, Hashes und JWT-Decoder', url: 'nettools.html#encoder', internal: true },
       { title: 'PortChecker', desc: 'Python-GUI: IP-Bereiche auf offene Ports scannen', url: 'https://github.com/3mmooo/Portchecker' },
       { title: 'FontChecker', desc: 'Python-GUI: Schriftarten, Größen & Farben testen', url: 'https://github.com/3mmooo/fontchecker' },
       { title: 'Scropy', desc: 'Text aus dem neuesten Screenshot per OCR kopieren', url: 'https://github.com/3mmooo/-Scropy' },
@@ -293,9 +295,13 @@ export const PLANETS = [
       <p>Hosting: Die Seite wird über GitHub Pages der GitHub, Inc. (USA) bereitgestellt. Beim Aufruf
       verarbeitet GitHub technisch notwendige Verbindungsdaten wie die IP-Adresse, um die Seite
       auszuliefern und abzusichern. Details: <a href="https://docs.github.com/de/site-policy/privacy-policies/github-general-privacy-statement" target="_blank" rel="noopener noreferrer">Datenschutzerklärung von GitHub</a>.</p>
-      <p>Der Highscore von Snake und der Fortschritt der Hacking-Challenge werden nur lokal in deinem
-      Browser gespeichert. Die Challenge setzt während des Spiels ein technisch notwendiges Cookie
-      (<code>mars_session</code>), das deinen Browser nicht verlässt.</p>
+      <p>Der Highscore von Snake, der Fortschritt der Hacking-Challenge und deine Einstellungen
+      (Sprache, Sound) werden nur lokal in deinem Browser gespeichert. Die Challenge setzt während des
+      Spiels ein technisch notwendiges Cookie (<code>mars_session</code>), das deinen Browser nicht verlässt.
+      Damit die Seite auch offline startet, legt dein Browser eine Kopie der Dateien in seinem Cache ab.</p>
+      <p>NetTools: Nur wenn du dort ausdrücklich auf „DNS abfragen“ oder „Meine IP anzeigen“ klickst,
+      wird eine Anfrage an Cloudflare (1.1.1.1) bzw. ipify gesendet. Alle anderen Werkzeuge laufen nur in
+      deinem Browser.</p>
       <p>Ausführliche Informationen und deine Rechte: <a href="https://eysec.de/datenschutz.html" target="_blank" rel="noopener noreferrer">Datenschutzerklärung auf eysec.de</a>.</p>`,
     facts: [
       ['Durchmesser', '49.244 km'],
@@ -304,4 +310,142 @@ export const PLANETS = [
       ['Tageslänge', '16 h 6 min'],
     ],
   },
+  {
+    // Easter Egg: kein Label, nicht im Dock – man muss ihn selbst finden
+    id: 'pluto',
+    name: 'Pluto',
+    section: 'Geheimversteck',
+    hidden: true,
+    accent: '#e3c9a8',
+    texture: 'pluto',
+    radius: 0.55,
+    distance: 96,
+    inclination: 0.3, // ~17° geneigte Bahn
+    tilt: 2.1,
+    spin: 0.04,
+    L0: 238.93, n: 0.00397,
+    text: `<p>Glückwunsch, du hast Pluto gefunden! 🎉 Seit 2006 ist er offiziell kein Planet mehr –
+      hier hat er trotzdem seinen Platz behalten.</p>
+      <p>Wusstest du? Pluto ist kleiner als unser Mond, und ein Jahr dauert dort 248 Erdjahre.
+      Seit seiner Entdeckung 1930 hat er die Sonne noch nicht einmal umrundet.</p>`,
+    facts: [
+      ['Durchmesser', '2.377 km'],
+      ['Abstand zur Sonne', '5,9 Mrd. km'],
+      ['Umlaufzeit', '248 Jahre'],
+      ['Herz', 'Tombaugh Regio'],
+    ],
+  },
 ];
+
+// ---------------------------------------------------------------
+// Englische Version: überschreibt die Texte oben, wenn EN aktiv ist.
+// links: Liste der Beschreibungen in derselben Reihenfolge wie oben.
+export const EN = {
+  sonne: {
+    name: 'Sun', section: 'Welcome',
+    text: `<p>Welcome to <strong>3mmooo.de</strong> – my little solar system about IT security,
+      my own software and browser games.</p>
+      <p>Every planet is a section of this site. Tap one and fly there.</p>`,
+    facts: [['Diameter', '1.39 million km'], ['Surface', '≈ 5,500 °C'], ['Age', '4.6 billion years'], ['Light to Earth', '8 min 20 s']],
+  },
+  merkur: {
+    name: 'Mercury', section: 'References',
+    text: `<p>The fastest planet – for projects I built for clients. Websites, ordering and booking
+      platforms, all live in production.</p>`,
+    links: ['Ordering platform · treevio.de', 'Online booking for barbershops', 'Website', 'Website',
+      'Shop with 3D configurator (demo)', 'Website', 'Background on every project'],
+    linkTitles: { 6: 'All references on eysec.de' },
+    facts: [['Diameter', '4,879 km'], ['Distance to Sun', '57.9 million km'], ['Orbit', '88 days'], ['Day length', '176 Earth days']],
+  },
+  venus: {
+    name: 'Venus', section: 'Products',
+    text: `<p>My own software for businesses – the 3vio family and Dinervio. With real customers,
+      prices and trial periods.</p>`,
+    links: ['AI phone agent: answers every call, around the clock', 'Office software for trades: quotes, e-invoicing, DATEV',
+      'Shift-schedule generator with rule checks', 'Ordering shops for restaurants – 0 % commission', 'The software family for businesses'],
+    facts: [['Diameter', '12,104 km'], ['Distance to Sun', '108.2 million km'], ['Orbit', '225 days'], ['Surface', '≈ 465 °C']],
+  },
+  erde: {
+    name: 'Earth', section: 'About Me',
+    text: `<p><strong>Emrah Yamak</strong> – developer, cybersecurity specialist and data protection officer from Meerbusch, Germany.</p>
+      <p>Working in IT support and second-level support, I saw every day where software fails in real life:
+      processes nobody thought through, bugs nobody can reproduce, and security holes that only show up
+      when it is too late.</p>
+      <p>So I trained as a specialist in system administration and cybersecurity. Today I build my own
+      software, platforms, websites and browser games with <strong>eysec</strong> – with security and
+      privacy built in from day one.</p>
+      <ol class="timeline">
+        <li><span>Support</span>IT support &amp; second-level support</li>
+        <li><span>2023 – 2024</span>System administration &amp; cybersecurity specialist: network and server security, penetration testing, threat modelling</li>
+        <li><span>2024</span>Information security officer (ISO 27001), BSI IT-Grundschutz practitioner, data protection officer (IHK)</li>
+        <li><span>Today</span>eysec · own software &amp; client projects</li>
+      </ol>`,
+    chips: ['ISO 27001', 'BSI IT-Grundschutz', 'Data protection (IHK)', 'Penetration testing', 'PowerShell', 'Python'],
+    links: ['Custom software & websites from Meerbusch', 'CV & contact'],
+    facts: [['Diameter', '12,742 km'], ['Distance to Sun', '149.6 million km'], ['Orbit', '365.25 days'], ['Day length', '24 h']],
+  },
+  mars: {
+    name: 'Mars', section: 'Red Teaming',
+    text: `<p>The red planet – tools and resources for offensive security.</p>
+      <p class="note">Only for authorised tests and learning.</p>`,
+    links: ['CTF challenge: crack the login in 5 levels (German)', 'Distribution for penetration testing',
+      'Generate reverse-shell payloads for pentests', 'Turn text into ASCII art'],
+    facts: [['Diameter', '6,779 km'], ['Distance to Sun', '227.9 million km'], ['Orbit', '687 days'], ['Day length', '24 h 37 min']],
+  },
+  jupiter: {
+    name: 'Jupiter', section: 'Blue Teaming',
+    text: `<p>The largest planet shields the inner planets from comets – fitting for defensive tools.</p>`,
+    links: ['Check and unmask shortened URLs', 'Scan files & links for malware', 'Check whether your data appeared in leaks',
+      'Vulnerability & exploit database', 'Public exploits & vulnerabilities'],
+    facts: [['Diameter', '139,820 km'], ['Distance to Sun', '778.5 million km'], ['Orbit', '11.9 years'], ['Day length', '9 h 56 min']],
+  },
+  saturn: {
+    name: 'Saturn', section: 'Games',
+    text: `<p>The lord of the rings – and home of the games. They all run right in your browser, on phones too.</p>`,
+    links: ['All games at a glance', '3D fighting game with super attacks, flying and online battles for four',
+      'Plane shooter through six rooms, as a team or head to head', 'A 3D pet that repeats everything you say',
+      'Block world with caves, monsters and your real street', 'Survive until dawn, story with five worlds',
+      'Stack flatbread, dodge knives – 60 levels', 'Gather a huge colony and storm the hill',
+      'Eat smaller fish and grow – all the way to leviathan', 'Gather an army of knights and storm the castle',
+      'The classic – with high score'],
+    facts: [['Diameter', '116,460 km'], ['Distance to Sun', '1.43 billion km'], ['Orbit', '29.4 years'], ['Day length', '10 h 33 min']],
+  },
+  uranus: {
+    name: 'Uranus', section: 'NetTools',
+    text: `<p>Network tools that run right in your browser – plus my Python tools with source code on GitHub. (Tool pages are in German.)</p>`,
+    links: ['All tools on one page', 'IPv4 & IPv6: network, broadcast, hosts, splitting', 'Query DNS records, check SPF and DMARC',
+      'Port reference and nmap commands for your own scans', 'Strong passwords & passphrases with strength check',
+      'Base64, URL, hex, hashes and JWT decoder', 'Python GUI: scan IP ranges for open ports',
+      'Python GUI: test fonts, sizes & colours', 'Copy text from your latest screenshot via OCR'],
+    linkTitles: { 0: 'Open NetTools', 1: 'Subnet calculator', 2: 'DNS & email security', 3: 'Ports & nmap builder', 4: 'Password generator' },
+    facts: [['Diameter', '50,724 km'], ['Distance to Sun', '2.87 billion km'], ['Orbit', '84 years'], ['Day length', '17 h 14 min']],
+  },
+  neptun: {
+    name: 'Neptune', section: 'Legal notice',
+    prepend: `<p class="note">Legal notice (Impressum) and privacy note as required by German law – shown in German.</p>`,
+    facts: [['Diameter', '49,244 km'], ['Distance to Sun', '4.5 billion km'], ['Orbit', '165 years'], ['Day length', '16 h 6 min']],
+  },
+  pluto: {
+    name: 'Pluto', section: 'Secret hideout',
+    text: `<p>Congratulations, you found Pluto! 🎉 It lost its planet status in 2006 – but here it keeps its place.</p>
+      <p>Fun fact: Pluto is smaller than our Moon, and one year there lasts 248 Earth years. Since its discovery
+      in 1930 it has not even completed one orbit.</p>`,
+    facts: [['Diameter', '2,377 km'], ['Distance to Sun', '5.9 billion km'], ['Orbit', '248 years'], ['Heart', 'Tombaugh Regio']],
+  },
+};
+
+// Oberflächentexte
+export const UI_TEXT = {
+  de: {
+    hint: 'Tippe auf einen Planeten', back: 'Sonnensystem', soon: 'Download folgt',
+    close: 'Schließen und zurück zum Sonnensystem', reset: 'Ansicht zurücksetzen',
+    travel: 'Zeitreise', today: 'Heute', travelHint: 'Wo standen die Planeten an diesem Tag?',
+    soundOn: 'Sound an', soundOff: 'Sound aus', lang: 'English', langShort: 'EN', locale: 'de-DE',
+  },
+  en: {
+    hint: 'Tap a planet', back: 'Solar system', soon: 'Download coming soon',
+    close: 'Close and return to the solar system', reset: 'Reset view',
+    travel: 'Time travel', today: 'Today', travelHint: 'Where were the planets on this day?',
+    soundOn: 'Sound on', soundOff: 'Sound off', lang: 'Deutsch', langShort: 'DE', locale: 'en-GB',
+  },
+};
