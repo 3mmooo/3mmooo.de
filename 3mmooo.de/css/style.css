@@ -113,12 +113,12 @@ button { font: inherit; color: inherit; }
   margin-top: 2px !important;
 }
 #lock .brand {
-  margin: 10px 0 0;
+  margin: 8px 0 0;
   line-height: 0;
   color: rgba(255, 255, 255, 0.92);
 }
 #lock .logo {
-  width: clamp(150px, 20vw, 210px);
+  width: clamp(110px, 10vw, 136px);
   height: auto;
   aspect-ratio: 168 / 40;
   filter: drop-shadow(0 2px 10px rgba(0, 0, 0, 0.7)) drop-shadow(0 0 18px rgba(255, 120, 80, 0.18));
@@ -468,7 +468,7 @@ a.link-card:hover, button.link-card:hover { background: rgba(255, 255, 255, 0.12
   transition: opacity 1.2s ease 0.2s, visibility 0s linear 1.4s;
 }
 #loader .logo {
-  width: min(240px, 60vw);
+  width: min(170px, 45vw);
   height: auto;
   aspect-ratio: 168 / 40;
   color: rgba(255, 255, 255, 0.92);
